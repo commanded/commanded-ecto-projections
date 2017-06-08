@@ -1,19 +1,15 @@
-# Commanded.Projections.Ecto
+# Commanded Ecto projections
 
-**TODO: Add description**
+Read model projections for [Commanded](https://github.com/slashdotdash/commanded) CQRS/ES applications using Ecto for persistence.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `commanded_ecto_projections` to your list of dependencies in `mix.exs`:
+  1. Add `commanded_ecto_projections` to your list of dependencies in `mix.exs`:
 
-```elixir
-def deps do
-  [{:commanded_ecto_projections, "~> 0.1.0"}]
-end
-```
-
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/commanded_ecto_projections](https://hexdocs.pm/commanded_ecto_projections).
-
+    ```elixir
+    def deps do
+      [
+        {:commanded_ecto_projections, "~> 0.1"},
+      ]
+    end
+    ```
