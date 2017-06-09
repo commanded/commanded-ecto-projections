@@ -11,7 +11,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     ```elixir
     def deps do
       [
-        {:commanded_ecto_projections, "~> 0.1"},
+        {:commanded_ecto_projections, github: "slashdotdash/commanded-ecto-projections"},
       ]
     end
     ```
