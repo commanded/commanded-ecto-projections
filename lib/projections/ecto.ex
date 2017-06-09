@@ -3,19 +3,11 @@ defmodule Commanded.Projections.Ecto do
   Read model projections for Commanded using Ecto.
 
   Example usage:
-
-      defmodule MyProjection do
-        use Ecto.Schema
-
-        schema "my_projections" do
-          # ...
-        end
-      end
-
+      
       defmodule Projector do
         use Commanded.Projections.Ecto, name: "my-projection"
 
-        project %Event{}, metdata do
+        project %Event{}, _metadata do
           Ecto.Multi.insert(multi, :my_projection, %MyProjection{...})
         end
 
@@ -59,7 +51,7 @@ defmodule Commanded.Projections.Ecto do
 
         multi = apply(multi_fn, [multi])
 
-        case Repo.transaction(multi, timeout: :infinity, pool_timeout: :infinity) do
+        case @repo.transaction(multi, timeout: :infinity, pool_timeout: :infinity) do
           {:ok, _changes} -> :ok
           {:error, :verify_projection_version, :already_seen_event, _changes_so_far} -> :ok
           {:error, stage, reason, _changes_so_far} -> {:error, reason}
@@ -77,7 +69,7 @@ defmodule Commanded.Projections.Ecto do
 
   defmacro project(event, metadata, do: block) do
     quote do
-      def handle(unquote(event), unquote(metadata)) do
+      def handle(unquote(event), unquote(metadata) = metadata) do
         update_projection(metadata, fn var!(multi) ->
           unquote(block)
         end)
