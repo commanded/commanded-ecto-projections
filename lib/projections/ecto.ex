@@ -34,22 +34,22 @@ defmodule Commanded.Projections.Ecto do
       @repo Application.get_env(:commanded_ecto_projections, :repo)
       @projection_name unquote(name)
 
-      def update_projection(%{event_id: event_id}, multi_fn) do
+      def update_projection(%{event_number: event_number}, multi_fn) do
         multi =
           Ecto.Multi.new
           |> Ecto.Multi.run(:verify_projection_version, fn _ ->
             version = case @repo.get(ProjectionVersion, @projection_name) do
-              nil -> @repo.insert!(%ProjectionVersion{projection_name: @projection_name, last_seen_event_id: 0})
+              nil -> @repo.insert!(%ProjectionVersion{projection_name: @projection_name, last_seen_event_number: 0})
               version -> version
             end
 
-            if version.last_seen_event_id == nil || version.last_seen_event_id < event_id do
+            if version.last_seen_event_number == nil || version.last_seen_event_number < event_number do
               {:ok, %{version: version}}
             else
               {:error, :already_seen_event}
             end
           end)
-          |> Ecto.Multi.update(:projection_version, ProjectionVersion.changeset(%ProjectionVersion{projection_name: @projection_name}, %{last_seen_event_id: event_id}))
+          |> Ecto.Multi.update(:projection_version, ProjectionVersion.changeset(%ProjectionVersion{projection_name: @projection_name}, %{last_seen_event_number: event_number}))
 
         multi = apply(multi_fn, [multi])
 

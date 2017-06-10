@@ -8,12 +8,12 @@ defmodule Commanded.Projections.ProjectionVersion do
   @primary_key {:projection_name, :string, []}
 
   schema "projection_versions" do
-    field :last_seen_event_id, :integer
+    field :last_seen_event_number, :integer
 
     timestamps()
   end
 
-  @required_fields ~w(last_seen_event_id)
+  @required_fields ~w(last_seen_event_number)
 
   def changeset(model, params \\ :empty) do
     cast(model, params, @required_fields)
