@@ -11,7 +11,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     ```elixir
     def deps do
       [
-        {:commanded_ecto_projections, github: "slashdotdash/commanded-ecto-projections"},
+        {:commanded_ecto_projections, "~> 0.1"},
       ]
     end
     ```
@@ -21,6 +21,35 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     ```elixir
     config :commanded_ecto_projections,
       repo: MyApp.Projections.Repo
+    ```
+
+3. Generate an Ecto migration in your app:
+
+    ```console
+    mix ecto.gen.migration create_projection_versions
+    ```
+
+4. Modify the generated migration, in `priv/repo/migrations`, to create the `projection_versions` table:
+
+    ```elixir
+    defmodule CreateProjectionVersions do
+      use Ecto.Migration
+
+      def change do
+        create table(:projection_versions, primary_key: false) do
+          add :projection_name, :text, primary_key: true
+          add :last_seen_event_id, :bigint
+
+          timestamps()
+        end
+      end
+    end
+    ```
+
+4. Run the Ecto migration:
+
+    ```console
+    mix ecto.migrate
     ```
 
 ## Usage
@@ -79,3 +108,27 @@ defmodule MyApp.Projections.Supervisor do
   end
 end
 ```
+
+### Rebuilding a projection
+
+The `projection_versions` table is used to ensure that events are only projected once.
+
+To rebuild a projection you will need to:
+
+1. Delete the row containing the last seen event for the projection name:
+
+    ```SQL
+    delete from projection_versions
+    where projection_name = 'my_projection';
+    ```
+
+2. Truncate the tables that are being populated by the projection, and restart their identity:
+
+    ```SQL
+    truncate table
+      my_projections,
+      other_projections
+    restart identity;
+    ```
+
+You will also need to reset the event store subscription for the commanded event handler. This is specific to whichever event store you are using.

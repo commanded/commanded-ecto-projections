@@ -3,7 +3,7 @@ defmodule Commanded.Projections.Ecto do
   Read model projections for Commanded using Ecto.
 
   Example usage:
-      
+
       defmodule Projector do
         use Commanded.Projections.Ecto, name: "my-projection"
 
@@ -26,6 +26,8 @@ defmodule Commanded.Projections.Ecto do
       import unquote(__MODULE__)
 
       alias Commanded.Projections.ProjectionVersion
+
+      @behaviour Commanded.Event.Handler
 
       @before_compile unquote(__MODULE__)
 
