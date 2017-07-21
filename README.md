@@ -136,3 +136,15 @@ To rebuild a projection you will need to:
     ```
 
 You will also need to reset the event store subscription for the commanded event handler. This is specific to whichever event store you are using.
+
+### Contributing
+
+Pull requests to contribute new or improved features, and extend documentation are most welcome. Please follow the existing coding conventions.
+
+You should include unit tests to cover any changes. Run `mix test` to execute the test suite:
+
+```console
+mix deps.get
+MIX_ENV=test mix do ecto.create, ecto.migrate
+mix test
+````

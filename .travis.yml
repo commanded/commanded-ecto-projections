@@ -10,7 +10,7 @@ services:
   - postgresql
 
 before_script:
-  - MIX_ENV=test mix ecto.create
+  - MIX_ENV=test mix do ecto.create, ecto.migrate
 
 sudo: required
 dist: trusty
