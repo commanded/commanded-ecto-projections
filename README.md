@@ -2,6 +2,12 @@
 
 Read model projections for [Commanded](https://github.com/slashdotdash/commanded) CQRS/ES applications using [Ecto](https://github.com/elixir-ecto/ecto) for persistence.
 
+MIT License
+
+[![Build Status](https://travis-ci.org/slashdotdash/commanded-ecto-projections.svg?branch=master)](https://travis-ci.org/slashdotdash/commanded-ecto-projections)
+
+---
+
 ## Installation
 
 You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed and configured before proceeding. Please follow the Ecto [Getting Started](https://hexdocs.pm/ecto/getting-started.html) guide to get going first.
