@@ -17,9 +17,14 @@ defmodule Commanded.Projections.Ecto do
       end
   """
 
-  defmacro __using__(name: name) do
-    quote do
+  defmacro __using__(opts) do
+    quote location: :keep do
+      @opts unquote(opts) || []
+      @repo Application.get_env(:commanded_ecto_projections, :repo) || raise "Commanded Ecto projections expects :repo to be configured in environment"
+      @projection_name @opts[:name] || raise "#{inspect __MODULE__} expects :name to be given"
+
       use Ecto.Schema
+      use Commanded.Event.Handler, name: @projection_name
 
       import Ecto.Changeset
       import Ecto.Query
@@ -27,16 +32,9 @@ defmodule Commanded.Projections.Ecto do
 
       alias Commanded.Projections.ProjectionVersion
 
-      @behaviour Commanded.Event.Handler
-
-      @before_compile unquote(__MODULE__)
-
-      @repo Application.get_env(:commanded_ecto_projections, :repo)
-      @projection_name unquote(name)
-
       def update_projection(%{event_number: event_number}, multi_fn) do
         multi =
-          Ecto.Multi.new
+          Ecto.Multi.new()
           |> Ecto.Multi.run(:verify_projection_version, fn _ ->
             version = case @repo.get(ProjectionVersion, @projection_name) do
               nil -> @repo.insert!(%ProjectionVersion{projection_name: @projection_name, last_seen_event_number: 0})
@@ -59,13 +57,6 @@ defmodule Commanded.Projections.Ecto do
           {:error, stage, reason, _changes_so_far} -> {:error, reason}
         end
       end
-    end
-  end
-
-  defmacro __before_compile__(_env) do
-    quote do
-      # ignore all other events
-      def handle(_event, _metadata), do: :ok
     end
   end
 

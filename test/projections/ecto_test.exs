@@ -78,6 +78,34 @@ defmodule Commanded.Projections.EctoTest do
     assert_projections []
   end
 
+  test "should ensure repo is configured" do
+    repo = Application.get_env(:commanded_ecto_projections, :repo)
+
+    try do
+      Application.put_env(:commanded_ecto_projections, :repo, nil)
+
+      assert_raise RuntimeError, "Commanded Ecto projections expects :repo to be configured in environment", fn ->
+        Code.eval_string """
+        defmodule UnconfiguredProjector do
+          use Commanded.Projections.Ecto, name: "projector"
+        end
+        """
+      end
+    after
+      Application.put_env(:commanded_ecto_projections, :repo, repo)
+    end
+  end
+
+  test "should ensure projection name is present" do
+    assert_raise RuntimeError, "UnnamedProjector expects :name to be given", fn ->
+      Code.eval_string """
+      defmodule UnnamedProjector do
+        use Commanded.Projections.Ecto
+      end
+      """
+    end
+  end
+
   defp assert_projections(expected) do
     assert Repo.all(Projection) |> pluck(:name) == expected
   end

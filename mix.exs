@@ -4,7 +4,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
   def project do
     [
       app: :commanded_ecto_projections,
-      version: "0.2.0",
+      version: "0.3.0",
       elixir: "~> 1.4",
       elixirc_paths: elixirc_paths(Mix.env),
       description: description(),
@@ -40,7 +40,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
   defp deps do
     [
-      {:commanded, ">= 0.10.0", runtime: false},
+      {:commanded, ">= 0.12.0", runtime: false},
       {:ecto, "~> 2.1", runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:postgrex, "~> 0.13", only: :test},

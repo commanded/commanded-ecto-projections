@@ -11,7 +11,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     ```elixir
     def deps do
       [
-        {:commanded_ecto_projections, "~> 0.1"},
+        {:commanded_ecto_projections, "~> 0.3"},
       ]
     end
     ```
@@ -57,10 +57,10 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
 Use Ecto schemas to define your read model:
 
 ```elixir
-defmodule Projection do
+defmodule ExampleProjection do
   use Ecto.Schema
 
-  schema "projections" do
+  schema "example_projections" do
     field :name, :string
   end
 end
@@ -68,18 +68,18 @@ end
 
 For each read model you will need to define a module that uses the `Commanded.Projections.Ecto` macro and configures the domain events to be projected.
 
-The `project/2` macro expects the domain event and metadata. You can also use `project/1` if you do not need to use the event metadata. Inside the project block you have access to an [Ecto.Multi](https://hexdocs.pm/ecto/Ecto.Multi.html) data structure, available as the `multi` variable, for grouping multiple Repo operations. These will be executed within a single transaction. You can use Ecto.Multi to insert, update, and delete data.
+The `project/2` macro expects the domain event and metadata. You can also use `project/1` if you do not need to use the event metadata. Inside the project block you have access to an [Ecto.Multi](https://hexdocs.pm/ecto/Ecto.Multi.html) data structure, available as the `multi` variable, for grouping multiple Repo operations. These will all be executed within a single transaction. You can use `Ecto.Multi` to insert, update, and delete data.
 
 ```elixir
-defmodule Projector do
-  use Commanded.Projections.Ecto, name: "projection"
+defmodule MyApp.ExampleProjector do
+  use Commanded.Projections.Ecto, name: "example_projection"
 
   project %AnEvent{name: name}, _metadata do
-    Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
+    Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
   end
 
   project %AnotherEvent{name: name} do
-    Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
+    Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
   end
 end
 ```
@@ -92,8 +92,6 @@ Your projector module must be included in your application supervision tree:
 defmodule MyApp.Projections.Supervisor do
   use Supervisor
 
-  alias MyApp.Projector
-
   def start_link do
     Supervisor.start_link(__MODULE__, nil)
   end
@@ -101,7 +99,7 @@ defmodule MyApp.Projections.Supervisor do
   def init(_) do
     children = [
       # projections
-      worker(Commanded.Event.Handler, ["Projector", Projector], id: :projector),      
+      worker(MyApp.ExampleProjector, [], id: :projector),      
     ]
 
     supervise(children, strategy: :one_for_one)
@@ -119,14 +117,14 @@ To rebuild a projection you will need to:
 
     ```SQL
     delete from projection_versions
-    where projection_name = 'my_projection';
+    where projection_name = 'example_projection';
     ```
 
 2. Truncate the tables that are being populated by the projection, and restart their identity:
 
     ```SQL
     truncate table
-      my_projections,
+      example_projections,
       other_projections
     restart identity;
     ```
