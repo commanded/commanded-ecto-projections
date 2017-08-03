@@ -2,13 +2,24 @@
 
 Read model projections for [Commanded](https://github.com/slashdotdash/commanded) CQRS/ES applications using [Ecto](https://github.com/elixir-ecto/ecto) for persistence.
 
+---
+
 MIT License
 
 [![Build Status](https://travis-ci.org/slashdotdash/commanded-ecto-projections.svg?branch=master)](https://travis-ci.org/slashdotdash/commanded-ecto-projections)
 
 ---
 
-## Installation
+### Overview
+
+- [Getting started](#getting-started)
+- [Usage](#usage)
+  - [Supervision](#supervision)
+  - [Rebuilding a projection](#rebuilding-a-projection)
+- [Contributing](#contributing)
+- [Need help?](#need-help)
+
+## Getting started
 
 You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed and configured before proceeding. Please follow the Ecto [Getting Started](https://hexdocs.pm/ecto/getting-started.html) guide to get going first.
 
@@ -159,4 +170,14 @@ You should include unit tests to cover any changes. Run `mix test` to execute th
 mix deps.get
 MIX_ENV=test mix do ecto.create, ecto.migrate
 mix test
-````
+```
+
+### Contributors
+
+- [Andrey Akulov](https://github.com/astery)
+
+## Need help?
+
+Please [open an issue](https://github.com/slashdotdash/commanded-ecto-projections/issues) if you encounter a problem, or need assistance. You can also seek help in the [Gitter chat room](https://gitter.im/commanded/Lobby) for Commanded.
+
+For commercial support, and consultancy, please contact [Ben Smith](mailto:ben@10consulting.com).
