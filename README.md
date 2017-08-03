@@ -17,6 +17,7 @@ MIT License
 - [Getting started](#getting-started)
 - [Usage](#usage)
   - [Supervision](#supervision)
+  - [`after_update` callback](#after-update-callback)
   - [Rebuilding a projection](#rebuilding-a-projection)
 - [Contributing](#contributing)
 - [Need help?](#need-help)
@@ -137,6 +138,27 @@ defmodule MyApp.Projections.Supervisor do
   end
 end
 ```
+
+### `after_update` callback
+
+You can define an `after_update/3` function in a projector to be called after each projected event. It receives the event, its associated metadata, and all changes from `Ecto.Multi` executed in the database transaction.
+
+```elixir
+defmodule MyApp.ExampleProjector do
+  use Commanded.Projections.Ecto, name: "example_projection"
+
+  project %AnEvent{name: name} do
+    Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
+  end
+
+  def after_update(event, metadata, changes) do
+    # ... use event, metadata, or `Ecto.Multi` changes
+    :ok
+  end
+end
+```
+
+You could use this function to notify subscribers that the read model has been updated (e.g. pub/sub to Phoenix channels).
 
 ### Rebuilding a projection
 

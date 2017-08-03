@@ -5,7 +5,10 @@ defmodule Commanded.Projections.Ecto do
   Example usage:
 
       defmodule Projector do
-        use Commanded.Projections.Ecto, name: "my-projection"
+        use Commanded.Projections.Ecto,
+          name: "my-projection",
+          repo: MyRepo
+          timeout: :infinity
 
         project %Event{}, _metadata do
           Ecto.Multi.insert(multi, :my_projection, %MyProjection{...})
@@ -24,6 +27,7 @@ defmodule Commanded.Projections.Ecto do
             Application.get_env(:commanded_ecto_projections, :repo) ||
             raise "Commanded Ecto projections expects :repo to be configured in environment"
       @projection_name @opts[:name] || raise "#{inspect __MODULE__} expects :name to be given"
+      @timeout @opts[:timeout] || :infinity
 
       use Ecto.Schema
       use Commanded.Event.Handler, name: @projection_name
@@ -34,7 +38,7 @@ defmodule Commanded.Projections.Ecto do
 
       alias Commanded.Projections.ProjectionVersion
 
-      def update_projection(%{event_number: event_number}, multi_fn) do
+      def update_projection(event, %{event_number: event_number} = metadata, multi_fn) do
         multi =
           Ecto.Multi.new()
           |> Ecto.Multi.run(:verify_projection_version, fn _ ->
@@ -53,19 +57,25 @@ defmodule Commanded.Projections.Ecto do
 
         multi = apply(multi_fn, [multi])
 
-        case @repo.transaction(multi, timeout: :infinity, pool_timeout: :infinity) do
-          {:ok, _changes} -> :ok
-          {:error, :verify_projection_version, :already_seen_event, _changes_so_far} -> :ok
-          {:error, stage, reason, _changes_so_far} -> {:error, reason}
+        case @repo.transaction(multi, timeout: @timeout, pool_timeout: @timeout) do
+          {:ok, changes} -> after_update(event, metadata, changes)
+          {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
+          {:error, stage, reason, _changes} -> {:error, reason}
         end
       end
+
+      def after_update(_event, _metadata, _changes), do: :ok
+
+      defoverridable [
+        after_update: 3,
+      ]
     end
   end
 
   defmacro project(event, metadata, do: block) do
     quote do
-      def handle(unquote(event), unquote(metadata) = metadata) do
-        update_projection(metadata, fn var!(multi) ->
+      def handle(unquote(event) = event, unquote(metadata) = metadata) do
+        update_projection(event, metadata, fn var!(multi) ->
           unquote(block)
         end)
       end
@@ -74,8 +84,8 @@ defmodule Commanded.Projections.Ecto do
 
   defmacro project(event, do: block) do
     quote do
-      def handle(unquote(event), metadata) do
-        update_projection(metadata, fn var!(multi) ->
+      def handle(unquote(event) = event, metadata) do
+        update_projection(event, metadata, fn var!(multi) ->
           unquote(block)
         end)
       end
