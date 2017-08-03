@@ -17,7 +17,7 @@ MIT License
 - [Getting started](#getting-started)
 - [Usage](#usage)
   - [Supervision](#supervision)
-  - [`after_update` callback](#after-update-callback)
+  - [`after_update` callback](#after_update-callback)
   - [Rebuilding a projection](#rebuilding-a-projection)
 - [Contributing](#contributing)
 - [Need help?](#need-help)
