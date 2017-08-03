@@ -160,7 +160,7 @@ end
 
 You could use this function to notify subscribers that the read model has been updated (e.g. pub/sub to Phoenix channels).
 
-### Rebuilding a projection
+### Rebuilding a projection
 
 The `projection_versions` table is used to ensure that events are only projected once.
 
