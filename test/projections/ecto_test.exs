@@ -96,6 +96,24 @@ defmodule Commanded.Projections.EctoTest do
     end
   end
 
+  test "should allow to set :repo as an option" do
+    repo = Application.get_env(:commanded_ecto_projections, :repo)
+
+    try do
+      Application.put_env(:commanded_ecto_projections, :repo, nil)
+
+      assert Code.eval_string """
+      defmodule ProjectorConfiguredViaOpts do
+        use Commanded.Projections.Ecto,
+          name: "projector",
+          repo: Commanded.Projections.Repo
+      end
+      """
+    after
+      Application.put_env(:commanded_ecto_projections, :repo, repo)
+    end
+  end
+
   test "should ensure projection name is present" do
     assert_raise RuntimeError, "UnnamedProjector expects :name to be given", fn ->
       Code.eval_string """

@@ -29,6 +29,18 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
       repo: MyApp.Projections.Repo
     ```
 
+    Or alternatively in case of umbrella application define it later per projection:
+
+    ```elixir
+    defmodule MyApp.ExampleProjector do
+      use Commanded.Projections.Ecto,
+        name: "example_projection",
+        repo: MyApp.Projections.Repo
+
+      ...
+    end
+    ```
+
 3. Generate an Ecto migration in your app:
 
     ```console

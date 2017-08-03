@@ -20,7 +20,9 @@ defmodule Commanded.Projections.Ecto do
   defmacro __using__(opts) do
     quote location: :keep do
       @opts unquote(opts) || []
-      @repo Application.get_env(:commanded_ecto_projections, :repo) || raise "Commanded Ecto projections expects :repo to be configured in environment"
+      @repo @opts[:repo] ||
+            Application.get_env(:commanded_ecto_projections, :repo) ||
+            raise "Commanded Ecto projections expects :repo to be configured in environment"
       @projection_name @opts[:name] || raise "#{inspect __MODULE__} expects :name to be given"
 
       use Ecto.Schema
