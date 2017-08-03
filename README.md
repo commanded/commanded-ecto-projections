@@ -4,6 +4,8 @@ Read model projections for [Commanded](https://github.com/slashdotdash/commanded
 
 ---
 
+[Changelog](CHANGELOG.md)
+
 MIT License
 
 [![Build Status](https://travis-ci.org/slashdotdash/commanded-ecto-projections.svg?branch=master)](https://travis-ci.org/slashdotdash/commanded-ecto-projections)
@@ -28,7 +30,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     ```elixir
     def deps do
       [
-        {:commanded_ecto_projections, "~> 0.3"},
+        {:commanded_ecto_projections, "~> 0.4"},
       ]
     end
     ```
