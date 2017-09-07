@@ -116,6 +116,17 @@ defmodule MyApp.ExampleProjector do
 end
 ```
 
+If you want to skip a projection event, you can return the `multi` transation without further modifying it.
+
+```
+project %ItemUpdated{uuid: uuid} = event, _metadata do
+  case Repo.get(ItemProjection, uuid) do
+    nil -> multi
+    item -> Ecto.Multi.update(multi, :item, update_changeset(event, item))
+  end
+end
+```
+
 ### Supervision
 
 Your projector module must be included in your application supervision tree:
