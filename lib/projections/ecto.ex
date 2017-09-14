@@ -76,6 +76,8 @@ defmodule Commanded.Projections.Ecto do
   end
 
   defp __include_projection_version_schema__(prefix) do
+    prefix = prefix || Application.get_env(:commanded_ecto_projections, :schema_prefix)
+
     quote do
       defmodule ProjectionVersion do
         @moduledoc false
