@@ -1,13 +1,13 @@
 defmodule Commanded.Projections.Ecto do
   @moduledoc """
-  Read model projections for Commanded using Ecto.
+  Read model projections for [Commanded](https://hex.pm/packages/commanded) using Ecto.
 
   Example usage:
 
       defmodule Projector do
         use Commanded.Projections.Ecto,
           name: "my-projection",
-          repo: MyRepo
+          repo: MyRepo,
           timeout: :infinity
 
         project %Event{}, _metadata do
@@ -18,6 +18,7 @@ defmodule Commanded.Projections.Ecto do
           Ecto.Multi.insert(multi, :my_projection, %MyProjection{...})
         end
       end
+
   """
 
   defmacro __using__(opts) do
