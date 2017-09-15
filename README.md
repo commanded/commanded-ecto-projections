@@ -32,7 +32,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     ```elixir
     def deps do
       [
-        {:commanded_ecto_projections, "~> 0.4"},
+        {:commanded_ecto_projections, "~> 0.5"},
       ]
     end
     ```
@@ -59,7 +59,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
 3. Generate an Ecto migration in your app:
 
     ```console
-    mix ecto.gen.migration create_projection_versions
+    $ mix ecto.gen.migration create_projection_versions
     ```
 
 4. Modify the generated migration, in `priv/repo/migrations`, to create the `projection_versions` table:
@@ -82,7 +82,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
 4. Run the Ecto migration:
 
     ```console
-    mix ecto.migrate
+    $ mix ecto.migrate
     ```
 
 ### Schema Prefix
@@ -233,6 +233,8 @@ mix test
 ### Contributors
 
 - [Andrey Akulov](https://github.com/astery)
+- [Florian Ebeling](https://github.com/febeling)
+- [Sascha Wolf](https://github.com/Zeeker)
 
 ## Need help?
 
