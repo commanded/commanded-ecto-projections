@@ -8,6 +8,7 @@ defmodule Commanded.Projections.Ecto do
         use Commanded.Projections.Ecto,
           name: "my-projection",
           repo: MyRepo,
+          schema_prefix: "my-prefix",
           timeout: :infinity
 
         project %Event{}, _metadata do
