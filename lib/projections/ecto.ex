@@ -8,6 +8,7 @@ defmodule Commanded.Projections.Ecto do
         use Commanded.Projections.Ecto,
           name: "my-projection",
           repo: MyRepo,
+          schema_prefix: "my-prefix",
           timeout: :infinity
 
         project %Event{}, _metadata do
@@ -22,13 +23,17 @@ defmodule Commanded.Projections.Ecto do
   """
 
   defmacro __using__(opts) do
+    opts = opts || []
+
     quote location: :keep do
-      @opts unquote(opts) || []
+      @opts unquote(opts)
       @repo @opts[:repo] ||
             Application.get_env(:commanded_ecto_projections, :repo) ||
             raise "Commanded Ecto projections expects :repo to be configured in environment"
       @projection_name @opts[:name] || raise "#{inspect __MODULE__} expects :name to be given"
       @timeout @opts[:timeout] || :infinity
+
+      unquote __include_projection_version_schema__(opts[:schema_prefix])
 
       use Ecto.Schema
       use Commanded.Event.Handler, name: @projection_name
@@ -36,8 +41,6 @@ defmodule Commanded.Projections.Ecto do
       import Ecto.Changeset
       import Ecto.Query
       import unquote(__MODULE__)
-
-      alias Commanded.Projections.ProjectionVersion
 
       def update_projection(event, %{event_number: event_number} = metadata, multi_fn) do
         multi =
@@ -70,6 +73,35 @@ defmodule Commanded.Projections.Ecto do
       defoverridable [
         after_update: 3,
       ]
+    end
+  end
+
+  defp __include_projection_version_schema__(prefix) do
+    prefix = prefix || Application.get_env(:commanded_ecto_projections, :schema_prefix)
+
+    quote do
+      defmodule ProjectionVersion do
+        @moduledoc false
+
+        use Ecto.Schema
+
+        import Ecto.Changeset
+
+        @primary_key {:projection_name, :string, []}
+        @schema_prefix unquote(prefix)
+
+        schema "projection_versions" do
+          field :last_seen_event_number, :integer
+
+          timestamps()
+        end
+
+        @required_fields ~w(last_seen_event_number)
+
+        def changeset(model, params \\ :empty) do
+          cast(model, params, @required_fields)
+        end
+      end
     end
   end
 

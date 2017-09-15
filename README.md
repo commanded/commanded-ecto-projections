@@ -15,6 +15,7 @@ MIT License
 ### Overview
 
 - [Getting started](#getting-started)
+  - [Schema Prefix](#schema-prefix)
 - [Usage](#usage)
   - [Supervision](#supervision)
   - [`after_update` callback](#after_update-callback)
@@ -84,6 +85,28 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     mix ecto.migrate
     ```
 
+### Schema Prefix
+
+When using a prefix for your schemas you might also want to change the prefix
+for the `ProjectionVersion` schema. There are two options to do this:
+
+1. provide a global prefix via the config
+
+```elixir
+config :commanded_ecto_projections,
+  schema_prefix: "example_schema_prefix"
+```
+
+2. provide the prefix on a projection by projection basis
+
+```elixir
+defmodule MyApp.ExampleProjector do
+  use Commanded.Projections.Ecto,
+    name: "example_projection",
+    schema_prefix: "example_schema_prefix"
+end
+```
+
 ## Usage
 
 Use Ecto schemas to define your read model:
@@ -142,7 +165,7 @@ defmodule MyApp.Projections.Supervisor do
   def init(_) do
     children = [
       # projections
-      worker(MyApp.ExampleProjector, [], id: :projector),      
+      worker(MyApp.ExampleProjector, [], id: :projector),
     ]
 
     supervise(children, strategy: :one_for_one)
