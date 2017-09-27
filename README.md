@@ -121,7 +121,7 @@ defmodule ExampleProjection do
 end
 ```
 
-For each read model you will need to define a module that uses the `Commanded.Projections.Ecto` macro and configures the domain events to be projected.
+For each read model you will need to define a module that uses the `Commanded.Projections.Ecto` macro and configures the domain events to be projected. The `:name` option passed to the `use` invocation specifies the name of the subscription to be used. It can be any string that is unique among subscriptions. 
 
 The `project/2` macro expects the domain event and metadata. You can also use `project/1` if you do not need to use the event metadata. Inside the project block you have access to an [Ecto.Multi](https://hexdocs.pm/ecto/Ecto.Multi.html) data structure, available as the `multi` variable, for grouping multiple Repo operations. These will all be executed within a single transaction. You can use `Ecto.Multi` to insert, update, and delete data.
 
