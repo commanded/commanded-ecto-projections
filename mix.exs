@@ -1,10 +1,12 @@
 defmodule Commanded.Projections.Ecto.Mixfile do
   use Mix.Project
 
+  @version "0.6.0"
+
   def project do
     [
       app: :commanded_ecto_projections,
-      version: "0.5.0",
+      version: @version,
       elixir: "~> 1.4",
       elixirc_paths: elixirc_paths(Mix.env),
       description: description(),
@@ -12,6 +14,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       build_embedded: Mix.env == :prod,
       start_permanent: Mix.env == :prod,
       deps: deps(),
+      docs: docs(),
     ]
   end
 
@@ -52,18 +55,26 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 """
 Read model projections for Commanded using Ecto
 """
-end
+  end
 
-defp package do
-  [
-    files: [
-      "lib", "mix.exs", "README*", "LICENSE*",
-      "priv/repo/migrations",
-    ],
-    maintainers: ["Ben Smith"],
-    licenses: ["MIT"],
-    links: %{"GitHub" => "https://github.com/slashdotdash/commanded-ecto-projections",
-             "Docs" => "https://hexdocs.pm/commanded_ecto_projections/"}
-  ]
-end
+  defp docs do
+    [
+      main: "Commanded.Projections.Ecto",
+      canonical: "http://hexdocs.pm/commanded_ecto_projections",
+      source_ref: "v#{@version}",
+    ]
+  end
+
+  defp package do
+    [
+      files: [
+        "lib", "mix.exs", "README*", "LICENSE*",
+        "priv/repo/migrations",
+      ],
+      maintainers: ["Ben Smith"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/slashdotdash/commanded-ecto-projections",
+               "Docs" => "https://hexdocs.pm/commanded_ecto_projections/"}
+    ]
+  end
 end

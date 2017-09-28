@@ -33,10 +33,13 @@ defmodule Commanded.Projections.Ecto do
       @projection_name @opts[:name] || raise "#{inspect __MODULE__} expects :name to be given"
       @timeout @opts[:timeout] || :infinity
 
+      # pass through any other configuration to the event handler
+      @handler_opts Keyword.drop(@opts, [:repo, :schema_prefix, :timeout])
+
       unquote __include_projection_version_schema__(opts[:schema_prefix])
 
       use Ecto.Schema
-      use Commanded.Event.Handler, name: @projection_name
+      use Commanded.Event.Handler, @handler_opts
 
       import Ecto.Changeset
       import Ecto.Query
