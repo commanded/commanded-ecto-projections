@@ -24,6 +24,8 @@ defmodule Commanded.Projections.Ecto do
 
   defmacro __using__(opts) do
     opts = opts || []
+    schema_prefix = opts[:schema_prefix] ||
+                    Application.get_env(:commanded_ecto_projections, :schema_prefix)
 
     quote location: :keep do
       @opts unquote(opts)
@@ -31,12 +33,13 @@ defmodule Commanded.Projections.Ecto do
             Application.get_env(:commanded_ecto_projections, :repo) ||
             raise "Commanded Ecto projections expects :repo to be configured in environment"
       @projection_name @opts[:name] || raise "#{inspect __MODULE__} expects :name to be given"
+      @schema_prefix unquote(schema_prefix)
       @timeout @opts[:timeout] || :infinity
 
       # pass through any other configuration to the event handler
       @handler_opts Keyword.drop(@opts, [:repo, :schema_prefix, :timeout])
 
-      unquote __include_projection_version_schema__(opts[:schema_prefix])
+      unquote __include_projection_version_schema__(schema_prefix)
 
       use Ecto.Schema
       use Commanded.Event.Handler, @handler_opts
@@ -60,7 +63,11 @@ defmodule Commanded.Projections.Ecto do
               {:error, :already_seen_event}
             end
           end)
-          |> Ecto.Multi.update(:projection_version, ProjectionVersion.changeset(%ProjectionVersion{projection_name: @projection_name}, %{last_seen_event_number: event_number}))
+          |> Ecto.Multi.update(
+            :projection_version,
+            ProjectionVersion.changeset(%ProjectionVersion{projection_name: @projection_name}, %{last_seen_event_number: event_number}),
+            [prefix: unquote(schema_prefix)]
+          )
 
         multi = apply(multi_fn, [multi])
 
@@ -80,8 +87,6 @@ defmodule Commanded.Projections.Ecto do
   end
 
   defp __include_projection_version_schema__(prefix) do
-    prefix = prefix || Application.get_env(:commanded_ecto_projections, :schema_prefix)
-
     quote do
       defmodule ProjectionVersion do
         @moduledoc false
