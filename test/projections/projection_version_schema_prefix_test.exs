@@ -1,6 +1,8 @@
 defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
   use ExUnit.Case
 
+  alias Commanded.Projections.Repo
+
   defmodule CustomSchemaPrefixProjector do
     use Commanded.Projections.Ecto,
       name: "my-custom-schema-prefix-projector",
@@ -18,6 +20,8 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
     on_exit fn ->
       Application.put_env(:commanded_ecto_projections, :schema_prefix, schema_prefix)
     end
+
+    Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
   test "should support default `nil` schema prefix in ProjectionVersion" do
@@ -43,5 +47,21 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
     prefix = AppConfigSchemaPrefixProjector.ProjectionVersion.__schema__(:prefix)
 
     assert prefix == "app-config-schema-prefix"
+  end
+
+  test "should update the ProjectionVersion with a schema prefix" do
+    defmodule TestPrefixProjector do
+      use Commanded.Projections.Ecto,
+        name: "test-projector",
+        schema_prefix: "test"
+
+      project _, do: multi
+    end
+
+    alias TestPrefixProjector.ProjectionVersion
+
+    TestPrefixProjector.handle(:some_event, %{event_number: 1})
+
+    assert Repo.get(ProjectionVersion, "test-projector").last_seen_event_number == 1
   end
 end
