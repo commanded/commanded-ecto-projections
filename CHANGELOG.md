@@ -7,7 +7,7 @@
 
 ## v0.5.0
 
-- Allow an Ecto schema prefix to be defined in config or per handler ([#4](https://github.com/slashdotdash/commanded-ecto-projections/pull/4)).
+- Allow an Ecto schema prefix to be defined in config or per handler ([#4](https://github.com/commanded/commanded-ecto-projections/pull/4)).
 
 ### Enhancements
 
@@ -15,5 +15,5 @@
 
 ### Enhancements
 
-- Add `repo` option to `Commanded.Projections.Ecto` macro ([#1](https://github.com/slashdotdash/commanded-ecto-projections/pull/1)).
+- Add `repo` option to `Commanded.Projections.Ecto` macro ([#1](https://github.com/commanded/commanded-ecto-projections/pull/1)).
 - Optional `after_update/3` callback function in projectors.

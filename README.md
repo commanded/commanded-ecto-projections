@@ -1,6 +1,6 @@
 # Commanded Ecto projections
 
-Read model projections for [Commanded](https://github.com/slashdotdash/commanded) CQRS/ES applications using [Ecto](https://github.com/elixir-ecto/ecto) for persistence.
+Read model projections for [Commanded](https://github.com/commanded/commanded) CQRS/ES applications using [Ecto](https://github.com/elixir-ecto/ecto) for persistence.
 
 ---
 
@@ -8,7 +8,7 @@ Read model projections for [Commanded](https://github.com/slashdotdash/commanded
 
 MIT License
 
-[![Build Status](https://travis-ci.org/slashdotdash/commanded-ecto-projections.svg?branch=master)](https://travis-ci.org/slashdotdash/commanded-ecto-projections)
+[![Build Status](https://travis-ci.org/commanded/commanded-ecto-projections.svg?branch=master)](https://travis-ci.org/commanded/commanded-ecto-projections)
 
 ---
 
@@ -121,7 +121,7 @@ defmodule ExampleProjection do
 end
 ```
 
-For each read model you will need to define a module that uses the `Commanded.Projections.Ecto` macro and configures the domain events to be projected. The `:name` option passed to the `use` invocation specifies the name of the subscription to be used. It can be any string that is unique among subscriptions. 
+For each read model you will need to define a module that uses the `Commanded.Projections.Ecto` macro and configures the domain events to be projected. The `:name` option passed to the `use` invocation specifies the name of the subscription to be used. It can be any string that is unique among subscriptions.
 
 The `project/2` macro expects the domain event and metadata. You can also use `project/1` if you do not need to use the event metadata. Inside the project block you have access to an [Ecto.Multi](https://hexdocs.pm/ecto/Ecto.Multi.html) data structure, available as the `multi` variable, for grouping multiple Repo operations. These will all be executed within a single transaction. You can use `Ecto.Multi` to insert, update, and delete data.
 
@@ -233,11 +233,12 @@ mix test
 ### Contributors
 
 - [Andrey Akulov](https://github.com/astery)
+- [Ben Smith](https://github.com/slashdotdash)
 - [Florian Ebeling](https://github.com/febeling)
 - [Sascha Wolf](https://github.com/Zeeker)
 
 ## Need help?
 
-Please [open an issue](https://github.com/slashdotdash/commanded-ecto-projections/issues) if you encounter a problem, or need assistance. You can also seek help in the [Gitter chat room](https://gitter.im/commanded/Lobby) for Commanded.
+Please [open an issue](https://github.com/commanded/commanded-ecto-projections/issues) if you encounter a problem, or need assistance. You can also seek help in the [Gitter chat room](https://gitter.im/commanded/Lobby) for Commanded.
 
 For commercial support, and consultancy, please contact [Ben Smith](mailto:ben@10consulting.com).
