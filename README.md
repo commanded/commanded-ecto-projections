@@ -139,9 +139,9 @@ defmodule MyApp.ExampleProjector do
 end
 ```
 
-If you want to skip a projection event, you can return the `multi` transation without further modifying it.
+If you want to skip a projection event, you can return the `multi` transaction without further modifying it:
 
-```
+```elixir
 project %ItemUpdated{uuid: uuid} = event, _metadata do
   case Repo.get(ItemProjection, uuid) do
     nil -> multi
@@ -165,7 +165,7 @@ defmodule MyApp.Projections.Supervisor do
   def init(_) do
     children = [
       # projections
-      worker(MyApp.ExampleProjector, [], id: :projector),
+      worker(MyApp.ExampleProjector, [], id: :example_projector),
     ]
 
     supervise(children, strategy: :one_for_one)
