@@ -4,13 +4,15 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
 
   alias Commanded.Projections.Repo
 
-  defmodule AnEvent, do: defstruct [name: "AnEvent", pid: nil]
+  defmodule AnEvent do
+    defstruct name: "AnEvent", pid: nil
+  end
 
   defmodule Projection do
     use Ecto.Schema
 
     schema "projections" do
-      field :name, :string
+      field(:name, :string)
     end
   end
 
