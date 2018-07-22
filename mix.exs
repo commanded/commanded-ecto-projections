@@ -8,19 +8,19 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       app: :commanded_ecto_projections,
       version: @version,
       elixir: "~> 1.4",
-      elixirc_paths: elixirc_paths(Mix.env),
+      elixirc_paths: elixirc_paths(Mix.env()),
       description: description(),
       package: package(),
-      build_embedded: Mix.env == :prod,
-      start_permanent: Mix.env == :prod,
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
       deps: deps(),
-      docs: docs(),
+      docs: docs()
     ]
   end
 
   def application do
     [
-      extra_applications: extra_applications(Mix.env),
+      extra_applications: extra_applications(Mix.env())
     ]
   end
 
@@ -30,11 +30,13 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       :logger,
       :ecto,
       :postgrex,
+      # :commanded
     ]
   end
+
   defp extra_applications(_) do
     [
-      :logger,
+      :logger
     ]
   end
 
@@ -44,37 +46,42 @@ defmodule Commanded.Projections.Ecto.Mixfile do
   defp deps do
     [
       {:commanded, ">= 0.12.0", runtime: false},
-      {:ecto, "~> 2.1", runtime: false},
+      {:ecto, "~> 2.2", runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:postgrex, "~> 0.13", only: :test},
-      {:mix_test_watch, "~> 0.4", only: :dev, runtime: false},
+      {:mix_test_watch, "~> 0.6", only: :dev, runtime: false}
     ]
   end
 
   defp description do
-"""
-Read model projections for Commanded using Ecto
-"""
+    """
+    Read model projections for Commanded using Ecto
+    """
   end
 
   defp docs do
     [
       main: "Commanded.Projections.Ecto",
       canonical: "http://hexdocs.pm/commanded_ecto_projections",
-      source_ref: "v#{@version}",
+      source_ref: "v#{@version}"
     ]
   end
 
   defp package do
     [
       files: [
-        "lib", "mix.exs", "README*", "LICENSE*",
-        "priv/repo/migrations",
+        "lib",
+        "mix.exs",
+        "README*",
+        "LICENSE*",
+        "priv/repo/migrations"
       ],
       maintainers: ["Ben Smith"],
       licenses: ["MIT"],
-      links: %{"GitHub" => "https://github.com/commanded/commanded-ecto-projections",
-               "Docs" => "https://hexdocs.pm/commanded_ecto_projections/"}
+      links: %{
+        "GitHub" => "https://github.com/commanded/commanded-ecto-projections",
+        "Docs" => "https://hexdocs.pm/commanded_ecto_projections/"
+      }
     ]
   end
 end

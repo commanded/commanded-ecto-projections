@@ -10,16 +10,15 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
   end
 
   defmodule DefaultSchemaPrefixProjector do
-    use Commanded.Projections.Ecto,
-      name: "default-schema-prefix-projector"
+    use Commanded.Projections.Ecto, name: "default-schema-prefix-projector"
   end
 
   setup do
     schema_prefix = Application.get_env(:commanded_ecto_projections, :schema_prefix)
 
-    on_exit fn ->
+    on_exit(fn ->
       Application.put_env(:commanded_ecto_projections, :schema_prefix, schema_prefix)
-    end
+    end)
 
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
@@ -40,13 +39,16 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
     Application.put_env(:commanded_ecto_projections, :schema_prefix, "app-config-schema-prefix")
 
     defmodule AppConfigSchemaPrefixProjector do
-      use Commanded.Projections.Ecto,
-        name: "app-config-schema-prefix-projector"
+      use Commanded.Projections.Ecto, name: "app-config-schema-prefix-projector"
     end
 
     prefix = AppConfigSchemaPrefixProjector.ProjectionVersion.__schema__(:prefix)
 
     assert prefix == "app-config-schema-prefix"
+  end
+
+  defmodule AnEvent do
+    defstruct [:name]
   end
 
   test "should update the ProjectionVersion with a schema prefix" do
@@ -55,12 +57,12 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
         name: "test-projector",
         schema_prefix: "test"
 
-      project _, do: multi
+      project(%AnEvent{}, do: multi)
     end
 
     alias TestPrefixProjector.ProjectionVersion
 
-    TestPrefixProjector.handle(:some_event, %{event_number: 1})
+    TestPrefixProjector.handle(%AnEvent{}, %{event_number: 1})
 
     assert Repo.get(ProjectionVersion, "test-projector").last_seen_event_number == 1
   end

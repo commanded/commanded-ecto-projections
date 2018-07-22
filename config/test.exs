@@ -3,8 +3,9 @@ use Mix.Config
 # Print only warnings and errors during test
 config :logger, :console, level: :warn, format: "[$level] $message\n"
 
-config :ex_unit,
-  capture_log: true
+config :ex_unit, capture_log: true
+
+config :commanded, event_store_adapter: Commanded.EventStore.Adapters.InMemory
 
 config :commanded_ecto_projections,
   ecto_repos: [Commanded.Projections.Repo],

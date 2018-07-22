@@ -24,22 +24,22 @@ defmodule Commanded.Projections.Ecto do
 
   defmacro __using__(opts) do
     opts = opts || []
-    schema_prefix = opts[:schema_prefix] ||
-                    Application.get_env(:commanded_ecto_projections, :schema_prefix)
+
+    schema_prefix =
+      opts[:schema_prefix] || Application.get_env(:commanded_ecto_projections, :schema_prefix)
 
     quote location: :keep do
       @opts unquote(opts)
-      @repo @opts[:repo] ||
-            Application.get_env(:commanded_ecto_projections, :repo) ||
-            raise "Commanded Ecto projections expects :repo to be configured in environment"
-      @projection_name @opts[:name] || raise "#{inspect __MODULE__} expects :name to be given"
+      @repo @opts[:repo] || Application.get_env(:commanded_ecto_projections, :repo) ||
+              raise("Commanded Ecto projections expects :repo to be configured in environment")
+      @projection_name @opts[:name] || raise("#{inspect(__MODULE__)} expects :name to be given")
       @schema_prefix unquote(schema_prefix)
       @timeout @opts[:timeout] || :infinity
 
-      # pass through any other configuration to the event handler
+      # Pass through any other configuration to the event handler
       @handler_opts Keyword.drop(@opts, [:repo, :schema_prefix, :timeout])
 
-      unquote __include_projection_version_schema__(schema_prefix)
+      unquote(__include_projection_version_schema__(schema_prefix))
 
       use Ecto.Schema
       use Commanded.Event.Handler, @handler_opts
@@ -49,15 +49,28 @@ defmodule Commanded.Projections.Ecto do
       import unquote(__MODULE__)
 
       def update_projection(event, %{event_number: event_number} = metadata, multi_fn) do
+        changeset =
+          ProjectionVersion.changeset(%ProjectionVersion{projection_name: @projection_name}, %{
+            last_seen_event_number: event_number
+          })
+
         multi =
           Ecto.Multi.new()
           |> Ecto.Multi.run(:verify_projection_version, fn _ ->
-            version = case @repo.get(ProjectionVersion, @projection_name) do
-              nil -> @repo.insert!(%ProjectionVersion{projection_name: @projection_name, last_seen_event_number: 0})
-              version -> version
-            end
+            version =
+              case @repo.get(ProjectionVersion, @projection_name) do
+                nil ->
+                  @repo.insert!(%ProjectionVersion{
+                    projection_name: @projection_name,
+                    last_seen_event_number: 0
+                  })
 
-            if version.last_seen_event_number == nil || version.last_seen_event_number < event_number do
+                version ->
+                  version
+              end
+
+            if version.last_seen_event_number == nil ||
+                 version.last_seen_event_number < event_number do
               {:ok, %{version: version}}
             else
               {:error, :already_seen_event}
@@ -65,24 +78,31 @@ defmodule Commanded.Projections.Ecto do
           end)
           |> Ecto.Multi.update(
             :projection_version,
-            ProjectionVersion.changeset(%ProjectionVersion{projection_name: @projection_name}, %{last_seen_event_number: event_number}),
-            [prefix: unquote(schema_prefix)]
+            changeset,
+            prefix: unquote(schema_prefix)
           )
 
-        multi = apply(multi_fn, [multi])
-
-        case @repo.transaction(multi, timeout: @timeout, pool_timeout: @timeout) do
-          {:ok, changes} -> after_update(event, metadata, changes)
+        with %Ecto.Multi{} = multi <- apply(multi_fn, [multi]),
+             {:ok, changes} <- attempt_transaction(multi) do
+          after_update(event, metadata, changes)
+        else
           {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
-          {:error, stage, reason, _changes} -> {:error, reason}
+          {:error, _stage, error, _changes} -> {:error, error}
+          {:error, error} -> {:error, error}
         end
       end
 
       def after_update(_event, _metadata, _changes), do: :ok
 
-      defoverridable [
-        after_update: 3,
-      ]
+      defoverridable after_update: 3
+
+      defp attempt_transaction(multi) do
+        try do
+          @repo.transaction(multi, timeout: @timeout, pool_timeout: @timeout)
+        rescue
+          e -> {:error, e}
+        end
+      end
     end
   end
 
@@ -99,7 +119,7 @@ defmodule Commanded.Projections.Ecto do
         @schema_prefix unquote(prefix)
 
         schema "projection_versions" do
-          field :last_seen_event_number, :integer
+          field(:last_seen_event_number, :integer)
 
           timestamps()
         end
