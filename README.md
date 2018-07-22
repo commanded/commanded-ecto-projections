@@ -33,7 +33,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     ```elixir
     def deps do
       [
-        {:commanded_ecto_projections, "~> 0.6"},
+        {:commanded_ecto_projections, "~> 0.7"},
       ]
     end
     ```

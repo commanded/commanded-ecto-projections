@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.0
+
+- Support Commanded's event handler `error/3` callback ([#12](https://github.com/commanded/commanded-ecto-projections/pull/12)).
+
 ## v0.6.0
 
 - Pass through any additional projector configuration options to Commanded event handler.
