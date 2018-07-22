@@ -18,7 +18,8 @@ MIT License
   - [Schema Prefix](#schema-prefix)
 - [Usage](#usage)
   - [Supervision](#supervision)
-  - [`after_update` callback](#after_update-callback)
+  - [`error/3` callback](#error-callback)
+  - [`after_update/3` callback](#after_update-callback)
   - [Rebuilding a projection](#rebuilding-a-projection)
 - [Contributing](#contributing)
 - [Need help?](#need-help)
@@ -173,13 +174,58 @@ defmodule MyApp.Projections.Supervisor do
 end
 ```
 
-### `after_update` callback
+### `error/3` callback
+
+The `Commanded.Projections.Ecto` macro defines a Commanded event handler which means you can take advantage of the [`error/3` callback function](https://github.com/commanded/commanded/blob/f12a677ea70484e4f52159509897cdcdbf5c53b2/guides/Events.md#error3-callback) to handle any errors returned from a `project` function. The function is passed the error returned by the event handler (e.g. `{:error, error}`), the event causing the error, and a context map containing state passed between retries. Use the context map to track any transient state you need to access between retried failures, such as the number of failed attempts.
+
+You can return one of the following responses depending upon the error severity:
+
+- `{:retry, context}` - retry the failed event, provide a context map containing any state passed to subsequent failures. This could be used to count the number of failures, stopping after too many.
+
+- `{:retry, delay, context}` - retry the failed event, after sleeping for the requested delay (in milliseconds). Context is a map as described in `{:retry, context}` above.
+
+- `:skip` - skip the failed event by acknowledging receipt.
+
+- `{:stop, reason}` - stop the projector with the given reason.
+
+#### Error handling example
+
+Here's an example projector module where an error tagged tuple is explicitly returned from a `project` function, but you can also handle exceptions caused by faulty `Ecto.Multi` database operations in a similar manner since the errors are caught and returned as tagged tuples (e.g. `{:error, %Ecto.ConstraintError{}}`).
+
+```elixir
+defmodule MyApp.ExampleProjector do
+  use Commanded.Projections.Ecto, name: "MyApp.ExampleProjector"
+
+  require Logger
+
+  alias Commanded.Event.FailureContext
+
+  project %AnEvent{} do
+    {:error, :failed}
+  end
+
+  def error({:error, :failed} = error, %AnEvent{}, %FailureContext{}) do
+    :skip
+  end
+
+  def error({:error, %Ecto.ConstraintError{} = error}, _event, _failure_context) do
+    Logger.error(fn -> "Failed due to constraint error: " <> inspect(error) end)
+    :skip
+  end
+
+  def error({:error, _error} = error, _event, _failure_context) do
+    :skip
+  end
+end
+```
+
+### `after_update/3` callback
 
 You can define an `after_update/3` function in a projector to be called after each projected event. It receives the event, its associated metadata, and all changes from `Ecto.Multi` executed in the database transaction.
 
 ```elixir
 defmodule MyApp.ExampleProjector do
-  use Commanded.Projections.Ecto, name: "example_projection"
+  use Commanded.Projections.Ecto, name: "MyApp.ExampleProjector"
 
   project %AnEvent{name: name} do
     Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
