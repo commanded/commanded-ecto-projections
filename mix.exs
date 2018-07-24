@@ -1,7 +1,7 @@
 defmodule Commanded.Projections.Ecto.Mixfile do
   use Mix.Project
 
-  @version "0.7.0"
+  @version "0.7.1"
 
   def project do
     [
@@ -29,8 +29,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
     [
       :logger,
       :ecto,
-      :postgrex,
-      # :commanded
+      :postgrex
     ]
   end
 

@@ -82,7 +82,7 @@ defmodule Commanded.Projections.Ecto do
             prefix: unquote(schema_prefix)
           )
 
-        with %Ecto.Multi{} = multi <- apply(multi_fn, [multi]),
+        with %Ecto.Multi{} = multi <- apply_projection_to_multi(multi, multi_fn),
              {:ok, changes} <- attempt_transaction(multi) do
           after_update(event, metadata, changes)
         else
@@ -95,6 +95,15 @@ defmodule Commanded.Projections.Ecto do
       def after_update(_event, _metadata, _changes), do: :ok
 
       defoverridable after_update: 3
+
+      defp apply_projection_to_multi(%Ecto.Multi{} = multi, multi_fn)
+           when is_function(multi_fn, 1) do
+        try do
+          apply(multi_fn, [multi])
+        rescue
+          e -> {:error, e}
+        end
+      end
 
       defp attempt_transaction(multi) do
         try do

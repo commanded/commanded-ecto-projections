@@ -19,6 +19,10 @@ defmodule Commanded.Projections.ErrorCallbackTest do
     defstruct [:pid, name: "ExceptionEvent"]
   end
 
+  defmodule InvalidMultiEvent do
+    defstruct [:pid, :name]
+  end
+
   defmodule Projection do
     use Ecto.Schema
 
@@ -47,6 +51,13 @@ defmodule Commanded.Projections.ErrorCallbackTest do
       Ecto.Multi.insert(multi, :projection, %Projection{name: 1})
     end
 
+    project %InvalidMultiEvent{name: name} do
+      # Attempt to execute an invalid Ecto query (comparison with `nil` is forbidden as it is unsafe).
+      query = from(p in Projection, where: p.name == ^name)
+
+      Ecto.Multi.update_all(multi, :projection, query, set: [name: name])
+    end
+
     def error({:error, :failed} = error, %ErrorEvent{pid: pid}, %FailureContext{}) do
       send(pid, error)
 
@@ -54,6 +65,12 @@ defmodule Commanded.Projections.ErrorCallbackTest do
     end
 
     def error({:error, _error} = error, %ExceptionEvent{pid: pid}, %FailureContext{}) do
+      send(pid, error)
+
+      :skip
+    end
+
+    def error({:error, _error} = error, %InvalidMultiEvent{pid: pid}, %FailureContext{}) do
       send(pid, error)
 
       :skip
@@ -91,7 +108,7 @@ defmodule Commanded.Projections.ErrorCallbackTest do
       assert Process.alive?(projector)
     end
 
-    test "should be called on exceptipn", %{projector: projector} do
+    test "should be called on exception", %{projector: projector} do
       event = %ExceptionEvent{pid: self()}
       metadata = %{event_number: 1}
 
@@ -102,6 +119,20 @@ defmodule Commanded.Projections.ErrorCallbackTest do
       send(projector, {:events, events})
 
       assert_receive {:error, %Ecto.ChangeError{}}
+      assert Process.alive?(projector)
+    end
+
+    test "should be called on invalid `Ecto.Multi`", %{projector: projector} do
+      event = %InvalidMultiEvent{pid: self()}
+      metadata = %{event_number: 1}
+
+      events = [
+        %RecordedEvent{event_number: 1, event_id: UUID.uuid4(), data: event, metadata: metadata}
+      ]
+
+      send(projector, {:events, events})
+
+      assert_receive {:error, %ArgumentError{}}
       assert Process.alive?(projector)
     end
 
