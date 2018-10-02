@@ -130,11 +130,11 @@ The `project/2` macro expects the domain event and metadata. You can also use `p
 defmodule MyApp.ExampleProjector do
   use Commanded.Projections.Ecto, name: "example_projection"
 
-  project %AnEvent{name: name}, _metadata do
+  project %AnEvent{name: name}, _metadata, fn multi ->
     Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
   end
 
-  project %AnotherEvent{name: name} do
+  project %AnotherEvent{name: name}, fn multi ->
     Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
   end
 end
@@ -143,7 +143,7 @@ end
 If you want to skip a projection event, you can return the `multi` transaction without further modifying it:
 
 ```elixir
-project %ItemUpdated{uuid: uuid} = event, _metadata do
+project %ItemUpdated{uuid: uuid} = event, _metadata, fn multi ->
   case Repo.get(ItemProjection, uuid) do
     nil -> multi
     item -> Ecto.Multi.update(multi, :item, update_changeset(event, item))
@@ -200,7 +200,7 @@ defmodule MyApp.ExampleProjector do
 
   alias Commanded.Event.FailureContext
 
-  project %AnEvent{} do
+  project %AnEvent{}, fn _multi ->
     {:error, :failed}
   end
 
@@ -227,7 +227,7 @@ You can define an `after_update/3` function in a projector to be called after ea
 defmodule MyApp.ExampleProjector do
   use Commanded.Projections.Ecto, name: "MyApp.ExampleProjector"
 
-  project %AnEvent{name: name} do
+  project %AnEvent{name: name}, fn multi ->
     Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
   end
 

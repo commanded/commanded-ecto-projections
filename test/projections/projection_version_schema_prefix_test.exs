@@ -57,7 +57,7 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
         name: "test-projector",
         schema_prefix: "test"
 
-      project(%AnEvent{}, do: multi)
+      project(%AnEvent{}, & &1)
     end
 
     alias TestPrefixProjector.ProjectionVersion

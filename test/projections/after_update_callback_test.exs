@@ -19,7 +19,7 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
   defmodule Projector do
     use Commanded.Projections.Ecto, name: "projection"
 
-    project %AnEvent{name: name} do
+    project %AnEvent{name: name}, fn multi ->
       Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
     end
 

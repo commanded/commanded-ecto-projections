@@ -11,11 +11,11 @@ defmodule Commanded.Projections.Ecto do
           schema_prefix: "my-prefix",
           timeout: :infinity
 
-        project %Event{}, _metadata do
+        project %Event{}, _metadata, fn multi ->
           Ecto.Multi.insert(multi, :my_projection, %MyProjection{...})
         end
 
-        project %AnotherEvent{} do
+        project %AnotherEvent{}, fn multi ->
           Ecto.Multi.insert(multi, :my_projection, %MyProjection{...})
         end
       end
@@ -142,21 +142,21 @@ defmodule Commanded.Projections.Ecto do
     end
   end
 
-  defmacro project(event, metadata, do: block) do
+  defmacro project(event, metadata, lambda) do
     quote do
       def handle(unquote(event) = event, unquote(metadata) = metadata) do
-        update_projection(event, metadata, fn var!(multi) ->
-          unquote(block)
+        update_projection(event, metadata, fn multi ->
+          unquote(lambda).(multi)
         end)
       end
     end
   end
 
-  defmacro project(event, do: block) do
+  defmacro project(event, lambda) do
     quote do
       def handle(unquote(event) = event, metadata) do
-        update_projection(event, metadata, fn var!(multi) ->
-          unquote(block)
+        update_projection(event, metadata, fn multi ->
+          unquote(lambda).(multi)
         end)
       end
     end
