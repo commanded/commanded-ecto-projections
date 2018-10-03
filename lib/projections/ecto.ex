@@ -142,11 +142,41 @@ defmodule Commanded.Projections.Ecto do
     end
   end
 
+  defmacro project(event, metadata, do: block) do
+    IO.warn(
+      "project macro with \"do end\" block is deprecated; use project/3 with function instead",
+      Macro.Env.stacktrace(__ENV__)
+    )
+
+    quote do
+      def handle(unquote(event) = event, unquote(metadata) = metadata) do
+        update_projection(event, metadata, fn var!(multi) ->
+          unquote(block)
+        end)
+      end
+    end
+  end
+
   defmacro project(event, metadata, lambda) do
     quote do
       def handle(unquote(event) = event, unquote(metadata) = metadata) do
         update_projection(event, metadata, fn multi ->
           unquote(lambda).(multi)
+        end)
+      end
+    end
+  end
+
+  defmacro project(event, do: block) do
+    IO.warn(
+      "project macro with \"do end\" block is deprecated; use project/2 with function instead",
+      Macro.Env.stacktrace(__ENV__)
+    )
+
+    quote do
+      def handle(unquote(event) = event, metadata) do
+        update_projection(event, metadata, fn var!(multi) ->
+          unquote(block)
         end)
       end
     end
