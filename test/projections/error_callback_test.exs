@@ -34,24 +34,24 @@ defmodule Commanded.Projections.ErrorCallbackTest do
   defmodule ErrorProjector do
     use Commanded.Projections.Ecto, name: "ErrorProjector"
 
-    project %AnEvent{name: name, pid: pid} = event do
+    project %AnEvent{name: name, pid: pid} = event, fn multi ->
       send(pid, event)
 
       Ecto.Multi.insert(multi, :projection, %Projection{name: name})
     end
 
-    project %ErrorEvent{name: name} do
+    project %ErrorEvent{name: name}, fn multi ->
       Ecto.Multi.insert(multi, :projection, %Projection{name: name})
 
       {:error, :failed}
     end
 
-    project %ExceptionEvent{} do
+    project %ExceptionEvent{}, fn multi ->
       # Attempt an invalid insert due to `name` type mismatch (expects a string).
       Ecto.Multi.insert(multi, :projection, %Projection{name: 1})
     end
 
-    project %InvalidMultiEvent{name: name} do
+    project %InvalidMultiEvent{name: name}, fn multi ->
       # Attempt to execute an invalid Ecto query (comparison with `nil` is forbidden as it is unsafe).
       query = from(p in Projection, where: p.name == ^name)
 
