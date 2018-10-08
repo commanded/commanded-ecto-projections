@@ -48,7 +48,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       {:ecto, "~> 2.2", runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:postgrex, "~> 0.13", only: :test},
-      {:mix_test_watch, "~> 0.6", only: :dev, runtime: false}
+      {:mix_test_watch, "~> 0.9", only: :dev, runtime: false}
     ]
   end
 

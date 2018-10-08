@@ -1,5 +1,27 @@
 # Changelog
 
+## Next release
+
+### Enhancements
+
+- Use lambda instead of unhygienic var in projection macros ([#13](https://github.com/commanded/commanded-ecto-projections/pull/13)).
+
+  Previously _magic_ `multi`:
+
+  ```elixir
+  project %AnEvent{name: name}, _metadata do
+    Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
+  end
+  ```
+
+  Now `multi` provided as argument to function:
+
+  ```elixir
+  project %AnEvent{name: name}, _metadata, fn multi ->
+    Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
+  end
+  ```
+
 ## v0.7.1
 
 ### Bug fixes
