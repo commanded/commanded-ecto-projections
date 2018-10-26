@@ -135,7 +135,7 @@ defmodule Commanded.Projections.Ecto do
 
         @required_fields ~w(last_seen_event_number)
 
-        def changeset(model, params \\ :empty) do
+        def changeset(model, params \\ :invalid) do
           cast(model, params, @required_fields)
         end
       end
