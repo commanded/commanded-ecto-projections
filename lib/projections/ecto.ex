@@ -56,7 +56,7 @@ defmodule Commanded.Projections.Ecto do
 
         multi =
           Ecto.Multi.new()
-          |> Ecto.Multi.run(:verify_projection_version, fn _ ->
+          |> Ecto.Multi.run(:verify_projection_version, fn _repo, _changes ->
             version =
               case @repo.get(ProjectionVersion, @projection_name) do
                 nil ->
@@ -133,7 +133,7 @@ defmodule Commanded.Projections.Ecto do
           timestamps()
         end
 
-        @required_fields ~w(last_seen_event_number)
+        @required_fields ~w(last_seen_event_number)a
 
         def changeset(model, params \\ :invalid) do
           cast(model, params, @required_fields)
