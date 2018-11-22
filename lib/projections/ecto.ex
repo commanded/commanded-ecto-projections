@@ -133,7 +133,7 @@ defmodule Commanded.Projections.Ecto do
           timestamps()
         end
 
-        @required_fields ~w(last_seen_event_number)
+        @required_fields ~w(last_seen_event_number)a
 
         def changeset(model, params \\ :invalid) do
           cast(model, params, @required_fields)
