@@ -12,7 +12,6 @@ config :commanded_ecto_projections,
   repo: Commanded.Projections.Repo
 
 config :commanded_ecto_projections, Commanded.Projections.Repo,
-  adapter: Ecto.Adapters.Postgres,
   database: "commanded_ecto_projections_test",
   username: "postgres",
   password: "postgres",
