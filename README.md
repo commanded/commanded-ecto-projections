@@ -282,6 +282,7 @@ mix test
 
 - [Andrey Akulov](https://github.com/astery)
 - [Ben Smith](https://github.com/slashdotdash)
+- [CptBreeza](https://github.com/CptBreeza)
 - [Florian Ebeling](https://github.com/febeling)
 - [Sascha Wolf](https://github.com/Zeeker)
 - [Tobiasz Małecki](https://github.com/amatalai)

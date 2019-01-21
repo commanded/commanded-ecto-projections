@@ -20,23 +20,17 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
   def application do
     [
-      extra_applications: extra_applications(Mix.env()) ++ [:ecto_sql]
+      extra_applications: extra_applications(Mix.env())
     ]
   end
 
-  # include ecto and postgrex apps in `test` environment only
+  # Include ecto and postgrex apps in `test` environment only
   defp extra_applications(:test) do
-    [
-      :logger,
-      :ecto,
-      :postgrex
-    ]
+    [:logger, :ecto, :ecto_sql, :postgrex]
   end
 
-  defp extra_applications(_) do
-    [
-      :logger
-    ]
+  defp extra_applications(_env) do
+    [:logger]
   end
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
