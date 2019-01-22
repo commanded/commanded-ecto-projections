@@ -8,7 +8,7 @@ Read model projections for [Commanded](https://github.com/commanded/commanded) C
 
 MIT License
 
-[![Build Status](https://travis-ci.org/commanded/commanded-ecto-projections.svg?branch=master)](https://travis-ci.org/commanded/commanded-ecto-projections)
+[![Build Status](https://travis-ci.com/commanded/commanded-ecto-projections.svg?branch=master)](https://travis-ci.com/commanded/commanded-ecto-projections)
 
 ---
 
