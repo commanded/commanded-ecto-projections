@@ -171,7 +171,6 @@ defmodule Commanded.Projections.ErrorCallbackTest do
   end
 
   defp start_commanded(_context) do
-    {:ok, _pid} = Commanded.EventStore.Adapters.InMemory.start_link()
     {:ok, _app} = Application.ensure_all_started(:commanded)
 
     on_exit(fn ->

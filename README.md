@@ -33,7 +33,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     ```elixir
     def deps do
       [
-        {:commanded_ecto_projections, "~> 0.7"},
+        {:commanded_ecto_projections, "~> 0.8"},
       ]
     end
     ```
@@ -91,14 +91,14 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
 When using a prefix for your schemas you might also want to change the prefix
 for the `ProjectionVersion` schema. There are two options to do this:
 
-1. provide a global prefix via the config
+1. Provide a global prefix via the config
 
 ```elixir
 config :commanded_ecto_projections,
   schema_prefix: "example_schema_prefix"
 ```
 
-2. provide the prefix on a projection by projection basis
+2. Provide the prefix on a projection by projection basis
 
 ```elixir
 defmodule MyApp.ExampleProjector do
