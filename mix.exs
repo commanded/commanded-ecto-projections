@@ -71,6 +71,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       files: [
         "lib",
         "mix.exs",
+        ".formatter.exs",
         "README*",
         "LICENSE*",
         "priv/repo/migrations"
