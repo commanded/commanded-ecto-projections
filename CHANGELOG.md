@@ -1,5 +1,9 @@
 # Changelog
 
+## Next release
+
+- Add `.formatter.exs` to Hex package ([#19](https://github.com/commanded/commanded-ecto-projections/pull/19)).
+
 ## v0.8.0
 
 ### Enhancements
