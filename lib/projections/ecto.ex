@@ -130,7 +130,7 @@ defmodule Commanded.Projections.Ecto do
         schema "projection_versions" do
           field(:last_seen_event_number, :integer)
 
-          timestamps()
+          timestamps(type: :naive_datetime_usec)
         end
 
         @required_fields ~w(last_seen_event_number)a
