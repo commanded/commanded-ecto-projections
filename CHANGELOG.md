@@ -3,6 +3,7 @@
 ## Next release
 
 - Add `.formatter.exs` to Hex package ([#19](https://github.com/commanded/commanded-ecto-projections/pull/19)).
+- Add microseconds to timestamp fields in `projection_versions` ([#22](https://github.com/commanded/commanded-ecto-projections/pull/22)).
 
 ## v0.8.0
 
