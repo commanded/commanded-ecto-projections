@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Upgrading
+
+- Upgrade your existing `projection_versions` table by running:
+
+  ```sql
+  ALTER TABLE projection_versions ALTER COLUMN inserted_at TYPE timestamp with time zone USING inserted_at AT TIME ZONE 'UTC';
+  ALTER TABLE projection_versions ALTER COLUMN updated_at TYPE timestamp with time zone USING updated_at AT TIME ZONE 'UTC';
+  ```
+
 ## 1.4.0
 
 ### Enhancements
