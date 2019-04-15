@@ -56,7 +56,7 @@ defmodule Commanded.Projections.Ecto do
              {:ok, changes} <- attempt_transaction(multi) do
           after_update(event, metadata, changes)
         else
-          {:noop?, true} -> :ok # after_update(event, metadata, :noop)
+          {:noop?, true} -> after_update(event, metadata, %{})
           {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
           {:error, _stage, error, _changes} -> {:error, error}
           {:error, error} -> {:error, error}
