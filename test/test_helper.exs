@@ -7,12 +7,12 @@ defmodule CreateProjections do
 
   def change do
     create table(:projections) do
-      add :name, :text
+      add(:name, :text)
     end
   end
 end
 
-Ecto.Migrator.up(Repo, 20170609120000, CreateProjections)
+Ecto.Migrator.up(Repo, 20_170_609_120_000, CreateProjections)
 
 ExUnit.start()
 
