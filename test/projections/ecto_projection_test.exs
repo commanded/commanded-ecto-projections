@@ -17,6 +17,10 @@ defmodule Commanded.Projections.EctoProjectionTest do
     defstruct name: "IgnoredEvent"
   end
 
+  defmodule NoopEvent do
+    defstruct name: "NoopEvent"
+  end
+
   defmodule ErrorEvent do
     defstruct name: "ErrorEvent"
   end
@@ -38,6 +42,10 @@ defmodule Commanded.Projections.EctoProjectionTest do
 
     project %AnotherEvent{name: name}, fn multi ->
       Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
+    end
+
+    project %NoopEvent{}, fn multi ->
+      multi
     end
 
     project %ErrorEvent{}, fn multi ->
@@ -87,6 +95,25 @@ defmodule Commanded.Projections.EctoProjectionTest do
 
     assert_projections(Projection, ["AnEvent", "AnotherEvent"])
     assert_seen_event("Projector", 3)
+  end
+
+  test "should ignore noop event" do
+    assert :ok == Projector.handle(%AnEvent{}, %{event_number: 1})
+    assert :ok == Projector.handle(%NoopEvent{}, %{event_number: 2})
+
+    assert_projections(Projection, ["AnEvent"])
+    assert_seen_event("Projector", 1)
+  end
+
+  test "should ignore noop event amongst projections" do
+    assert :ok == Projector.handle(%AnEvent{}, %{event_number: 1})
+    assert :ok == Projector.handle(%NoopEvent{}, %{event_number: 2})
+    assert :ok == Projector.handle(%AnotherEvent{}, %{event_number: 3})
+    assert :ok == Projector.handle(%AnEvent{}, %{event_number: 4})
+    assert :ok == Projector.handle(%NoopEvent{}, %{event_number: 5})
+
+    assert_projections(Projection, ["AnEvent", "AnotherEvent", "AnEvent"])
+    assert_seen_event("Projector", 4)
   end
 
   test "should return an error on failure" do

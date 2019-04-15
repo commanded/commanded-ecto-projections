@@ -49,12 +49,14 @@ defmodule Commanded.Projections.Ecto do
       import unquote(__MODULE__)
 
       def update_projection(event, %{event_number: event_number} = metadata, multi_fn) do
-        multi = setup_transaction(event_number)
+        initial_multi = setup_transaction(event_number)
 
-        with %Ecto.Multi{} = multi <- apply_projection_to_multi(multi, multi_fn),
+        with %Ecto.Multi{} = multi <- apply_projection_to_multi(initial_multi, multi_fn),
+             {:noop?, false} <- {:noop?, multi == initial_multi},
              {:ok, changes} <- attempt_transaction(multi) do
           after_update(event, metadata, changes)
         else
+          {:noop?, true} -> :ok # after_update(event, metadata, :noop)
           {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
           {:error, _stage, error, _changes} -> {:error, error}
           {:error, error} -> {:error, error}
