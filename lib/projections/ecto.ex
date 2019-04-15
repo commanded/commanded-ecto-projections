@@ -39,7 +39,7 @@ defmodule Commanded.Projections.Ecto do
       # Pass through any other configuration to the event handler
       @handler_opts Keyword.drop(@opts, [:repo, :schema_prefix, :timeout])
 
-      unquote(__include_projection_version_schema__(schema_prefix))
+      unquote do: Commanded.Projections.ProjectionVersion.__include__(prefix: schema_prefix)
 
       use Ecto.Schema
       use Commanded.Event.Handler, @handler_opts
@@ -110,33 +110,6 @@ defmodule Commanded.Projections.Ecto do
           @repo.transaction(multi, timeout: @timeout, pool_timeout: @timeout)
         rescue
           e -> {:error, e}
-        end
-      end
-    end
-  end
-
-  defp __include_projection_version_schema__(prefix) do
-    quote do
-      defmodule ProjectionVersion do
-        @moduledoc false
-
-        use Ecto.Schema
-
-        import Ecto.Changeset
-
-        @primary_key {:projection_name, :string, []}
-        @schema_prefix unquote(prefix)
-
-        schema "projection_versions" do
-          field(:last_seen_event_number, :integer)
-
-          timestamps(type: :naive_datetime_usec)
-        end
-
-        @required_fields ~w(last_seen_event_number)a
-
-        def changeset(model, params \\ :invalid) do
-          cast(model, params, @required_fields)
         end
       end
     end
