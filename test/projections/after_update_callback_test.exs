@@ -37,6 +37,21 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
     end
   end
 
+  defmodule ProjectorWithAfterUpdateForNoop do
+    use Commanded.Projections.Ecto,
+      name: "projection",
+      call_after_update_for_noop?: true
+
+    project %NoopEvent{}, fn multi ->
+      multi
+    end
+
+    def after_update(event, metadata, changes) do
+      send(event.pid, {event, metadata, changes})
+      :ok
+    end
+  end
+
   setup do
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
@@ -55,13 +70,21 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
     end
   end
 
-  test "should call `after_update` function with event, metadata and an empty map as changes" do
+  test "should not call `after_update` function for noop events per default" do
     event = %NoopEvent{pid: self()}
     metadata = %{event_number: 1}
-    changes = %{}
 
     assert :ok == Projector.handle(event, metadata)
 
-    assert_receive {^event, ^metadata, ^changes}
+    refute_receive {^event, ^metadata, _}
+  end
+
+  test "should call `after_update` function with event, metadata and with `:noop` for changes, for projections which explicitly requested that" do
+    event = %NoopEvent{pid: self()}
+    metadata = %{event_number: 1}
+
+    assert :ok == ProjectorWithAfterUpdateForNoop.handle(event, metadata)
+
+    assert_receive {^event, ^metadata, :noop}
   end
 end

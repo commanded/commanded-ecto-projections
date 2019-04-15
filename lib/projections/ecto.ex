@@ -28,6 +28,8 @@ defmodule Commanded.Projections.Ecto do
     schema_prefix =
       opts[:schema_prefix] || Application.get_env(:commanded_ecto_projections, :schema_prefix)
 
+    call_after_update_for_noop? = opts[:call_after_update_for_noop?] == true
+
     quote location: :keep do
       @opts unquote(opts)
       @repo @opts[:repo] || Application.get_env(:commanded_ecto_projections, :repo) ||
@@ -35,6 +37,7 @@ defmodule Commanded.Projections.Ecto do
       @projection_name @opts[:name] || raise("#{inspect(__MODULE__)} expects :name to be given")
       @schema_prefix unquote(schema_prefix)
       @timeout @opts[:timeout] || :infinity
+      @call_after_update_for_noop? unquote(call_after_update_for_noop?)
 
       # Pass through any other configuration to the event handler
       @handler_opts Keyword.drop(@opts, [:repo, :schema_prefix, :timeout])
@@ -56,10 +59,23 @@ defmodule Commanded.Projections.Ecto do
              {:ok, changes} <- attempt_transaction(multi) do
           after_update(event, metadata, changes)
         else
-          {:noop?, true} -> after_update(event, metadata, %{})
-          {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
-          {:error, _stage, error, _changes} -> {:error, error}
-          {:error, error} -> {:error, error}
+          {:noop?, true} ->
+            unquote(
+              if call_after_update_for_noop? do
+                quote do: after_update(event, metadata, :noop)
+              else
+                :ok
+              end
+            )
+
+          {:error, :verify_projection_version, :already_seen_event, _changes} ->
+            :ok
+
+          {:error, _stage, error, _changes} ->
+            {:error, error}
+
+          {:error, error} ->
+            {:error, error}
         end
       end
 
