@@ -3,6 +3,14 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
 
   alias Commanded.Projections.Repo
 
+  defmodule Projection do
+    use Ecto.Schema
+
+    schema "projections" do
+      field(:name, :string)
+    end
+  end
+
   defmodule CustomSchemaPrefixProjector do
     use Commanded.Projections.Ecto,
       name: "my-custom-schema-prefix-projector",
@@ -57,7 +65,9 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
         name: "test-projector",
         schema_prefix: "test"
 
-      project(%AnEvent{}, & &1)
+      project %AnEvent{name: name}, _metadata, fn multi ->
+        Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
+      end
     end
 
     alias TestPrefixProjector.ProjectionVersion
