@@ -49,38 +49,7 @@ defmodule Commanded.Projections.Ecto do
       import unquote(__MODULE__)
 
       def update_projection(event, %{event_number: event_number} = metadata, multi_fn) do
-        changeset =
-          ProjectionVersion.changeset(%ProjectionVersion{projection_name: @projection_name}, %{
-            last_seen_event_number: event_number
-          })
-
-        multi =
-          Ecto.Multi.new()
-          |> Ecto.Multi.run(:verify_projection_version, fn _repo, _changes ->
-            version =
-              case @repo.get(ProjectionVersion, @projection_name) do
-                nil ->
-                  @repo.insert!(%ProjectionVersion{
-                    projection_name: @projection_name,
-                    last_seen_event_number: 0
-                  })
-
-                version ->
-                  version
-              end
-
-            if version.last_seen_event_number == nil ||
-                 version.last_seen_event_number < event_number do
-              {:ok, %{version: version}}
-            else
-              {:error, :already_seen_event}
-            end
-          end)
-          |> Ecto.Multi.update(
-            :projection_version,
-            changeset,
-            prefix: unquote(schema_prefix)
-          )
+        multi = setup_transaction(event_number)
 
         with %Ecto.Multi{} = multi <- apply_projection_to_multi(multi, multi_fn),
              {:ok, changes} <- attempt_transaction(multi) do
@@ -89,6 +58,39 @@ defmodule Commanded.Projections.Ecto do
           {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
           {:error, _stage, error, _changes} -> {:error, error}
           {:error, error} -> {:error, error}
+        end
+      end
+
+      defp setup_transaction(event_number) do
+        changeset =
+          ProjectionVersion.changeset(
+            %ProjectionVersion{projection_name: @projection_name},
+            %{last_seen_event_number: event_number}
+          )
+
+        Ecto.Multi.new()
+        |> Ecto.Multi.run(:verify_projection_version, &verify_projection_version(&1, &2, event_number))
+        |> Ecto.Multi.update(:projection_version, changeset, prefix: unquote(schema_prefix))
+      end
+
+      defp verify_projection_version(_repo, _changes, event_number) do
+        version =
+          case @repo.get(ProjectionVersion, @projection_name) do
+            nil ->
+              @repo.insert!(%ProjectionVersion{
+                projection_name: @projection_name,
+                last_seen_event_number: 0
+              })
+
+            version ->
+              version
+          end
+
+        if version.last_seen_event_number == nil ||
+             version.last_seen_event_number < event_number do
+          {:ok, %{version: version}}
+        else
+          {:error, :already_seen_event}
         end
       end
 
