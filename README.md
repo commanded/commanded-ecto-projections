@@ -24,9 +24,9 @@ MIT License
   - [Creating a projector](guides/Usage.md#creating-a-projector)
   - [Supervision](guides/Usage.md#supervision)
   - [Error handling](guides/Usage.md#error-handling)
-    - [`error/3` callback](guides/Usage.md#error-callback)
+    - [`error/3` callback](guides/Usage.md#error3-callback)
     - [Error handling example](guides/Usage.md#error-handling-example)
-  - [`after_update/3` callback](guides/Usage.md#after_update-callback)
+  - [`after_update/3` callback](guides/Usage.md#after_update3-callback)
   - [Schema prefix](guides/Usage.md#schema-prefix)
   - [Rebuilding a projection](guides/Usage.md#rebuilding-a-projection)
 
