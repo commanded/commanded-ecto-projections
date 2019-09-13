@@ -3,10 +3,10 @@ defmodule Commanded.Projections.Repo.Migrations.CreateProjectionVersions do
 
   def change do
     create table(:projection_versions, primary_key: false) do
-      add :projection_name, :text, primary_key: true
-      add :last_seen_event_number, :bigint
+      add(:projection_name, :text, primary_key: true)
+      add(:last_seen_event_number, :bigint)
 
-      timestamps()
+      timestamps(type: :naive_datetime_usec)
     end
   end
 end

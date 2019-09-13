@@ -86,8 +86,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       maintainers: ["Ben Smith"],
       licenses: ["MIT"],
       links: %{
-        "GitHub" => "https://github.com/commanded/commanded-ecto-projections",
-        "Docs" => "https://hexdocs.pm/commanded_ecto_projections/"
+        "GitHub" => "https://github.com/commanded/commanded-ecto-projections"
       }
     ]
   end

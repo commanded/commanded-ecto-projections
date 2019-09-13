@@ -27,7 +27,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
           add(:projection_name, :text, primary_key: true)
           add(:last_seen_event_number, :bigint)
 
-          timestamps()
+          timestamps(type: :naive_datetime_usec)
         end
       end
     end
