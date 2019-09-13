@@ -1,8 +1,8 @@
 defmodule Commanded.Projections.Ecto do
   @moduledoc """
-  Read model projections for [Commanded](https://hex.pm/packages/commanded) using Ecto.
+  Read model projections for Commanded using Ecto.
 
-  Example usage:
+  ## Example usage
 
       defmodule Projector do
         use Commanded.Projections.Ecto,
@@ -20,6 +20,11 @@ defmodule Commanded.Projections.Ecto do
           Ecto.Multi.insert(multi, :my_projection, %MyProjection{...})
         end
       end
+
+  ## Guides
+
+  - [Getting started](getting-started.html)
+  - [Usage](usage.html)
 
   """
 

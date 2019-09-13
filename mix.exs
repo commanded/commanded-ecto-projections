@@ -25,23 +25,18 @@ defmodule Commanded.Projections.Ecto.Mixfile do
   end
 
   # Include ecto and postgrex apps in `test` environment only
-  defp extra_applications(:test) do
-    [:logger, :ecto, :ecto_sql, :postgrex]
-  end
-
-  defp extra_applications(_env) do
-    [:logger]
-  end
+  defp extra_applications(:test), do: [:logger, :ecto, :ecto_sql, :postgrex]
+  defp extra_applications(_env), do: [:logger]
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_), do: ["lib"]
+  defp elixirc_paths(_env), do: ["lib"]
 
   defp deps do
     [
       {:commanded, github: "commanded/commanded"},
-      {:ecto, "~> 3.0", runtime: false},
-      {:ecto_sql, "~> 3.0", runtime: false},
-      {:postgrex, "~> 0.14", only: :test},
+      {:ecto, "~> 3.2", runtime: false},
+      {:ecto_sql, "~> 3.2", runtime: false},
+      {:postgrex, "~> 0.5", only: :test},
 
       # Optional dependencies
       {:jason, "~> 1.1", optional: true},
@@ -54,7 +49,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
   defp description do
     """
-    Read model projections for Commanded using Ecto
+    Read model projections for Commanded using Ecto.
     """
   end
 
@@ -62,7 +57,19 @@ defmodule Commanded.Projections.Ecto.Mixfile do
     [
       main: "Commanded.Projections.Ecto",
       canonical: "http://hexdocs.pm/commanded_ecto_projections",
-      source_ref: "v#{@version}"
+      source_ref: "v#{@version}",
+      extra_section: "GUIDES",
+      extras: [
+        "CHANGELOG.md",
+        "guides/Getting Started.md",
+        "guides/Usage.md"
+      ],
+      groups_for_extras: [
+        Introduction: [
+          "guides/Getting Started.md",
+          "guides/Usage.md"
+        ]
+      ]
     ]
   end
 
