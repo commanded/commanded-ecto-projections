@@ -17,7 +17,9 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
   end
 
   defmodule Projector do
-    use Commanded.Projections.Ecto, name: "projection"
+    use Commanded.Projections.Ecto,
+      application: TestApplication,
+      name: "projection"
 
     project %AnEvent{name: name}, fn multi ->
       Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
@@ -30,6 +32,7 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
   end
 
   setup do
+    start_supervised!(TestApplication)
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 

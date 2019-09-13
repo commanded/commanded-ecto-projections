@@ -32,9 +32,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
 
     ```elixir
     def deps do
-      [
-        {:commanded_ecto_projections, "~> 0.8"},
-      ]
+      [{:commanded_ecto_projections, "~> 0.8"}]
     end
     ```
 
@@ -50,10 +48,9 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     ```elixir
     defmodule MyApp.ExampleProjector do
       use Commanded.Projections.Ecto,
+        application: MyApp.Application,
         name: "example_projection",
         repo: MyApp.Projections.Repo
-
-      ...
     end
     ```
 
@@ -71,8 +68,8 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
 
       def change do
         create table(:projection_versions, primary_key: false) do
-          add :projection_name, :text, primary_key: true
-          add :last_seen_event_number, :bigint
+          add(:projection_name, :text, primary_key: true)
+          add(:last_seen_event_number, :bigint)
 
           timestamps()
         end
@@ -103,6 +100,7 @@ config :commanded_ecto_projections,
 ```elixir
 defmodule MyApp.ExampleProjector do
   use Commanded.Projections.Ecto,
+    application: MyApp.Application,    
     name: "example_projection",
     schema_prefix: "example_schema_prefix"
 end
@@ -117,7 +115,7 @@ defmodule ExampleProjection do
   use Ecto.Schema
 
   schema "example_projections" do
-    field :name, :string
+    field(:name, :string)
   end
 end
 ```
@@ -130,7 +128,9 @@ You can also use `project/2` if you do not need to use the event metadata.
 
 ```elixir
 defmodule MyApp.ExampleProjector do
-  use Commanded.Projections.Ecto, name: "example_projection"
+  use Commanded.Projections.Ecto,
+    application: MyApp.Application,    
+    name: "example_projection"
 
   project %AnEvent{name: name}, _metadata, fn multi ->
     Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
@@ -161,17 +161,17 @@ Your projector module must be included in your application supervision tree:
 defmodule MyApp.Projections.Supervisor do
   use Supervisor
 
-  def start_link do
-    Supervisor.start_link(__MODULE__, nil)
+  def start_link(init_arg) do
+    Supervisor.start_link(__MODULE__, init_arg, name: __MODULE__)
   end
 
-  def init(_) do
+  @impl true
+  def init(_init_arg) do
     children = [
-      # projections
-      worker(MyApp.ExampleProjector, [], id: :example_projector),
+      MyApp.ExampleProjector
     ]
 
-    supervise(children, strategy: :one_for_one)
+    Supervisor.init(children, strategy: :one_for_one)
   end
 end
 ```
@@ -196,7 +196,9 @@ Here's an example projector module where an error tagged tuple is explicitly ret
 
 ```elixir
 defmodule MyApp.ExampleProjector do
-  use Commanded.Projections.Ecto, name: "MyApp.ExampleProjector"
+  use Commanded.Projections.Ecto,
+    application: MyApp.Application,  
+    name: "MyApp.ExampleProjector"
 
   require Logger
 
@@ -206,16 +208,17 @@ defmodule MyApp.ExampleProjector do
     {:error, :failed}
   end
 
-  def error({:error, :failed} = error, %AnEvent{}, %FailureContext{}) do
+  def error({:error, :failed}, %AnEvent{}, %FailureContext{}) do
     :skip
   end
 
   def error({:error, %Ecto.ConstraintError{} = error}, _event, _failure_context) do
     Logger.error(fn -> "Failed due to constraint error: " <> inspect(error) end)
+    
     :skip
   end
 
-  def error({:error, _error} = error, _event, _failure_context) do
+  def error({:error, _error}, _event, _failure_context) do
     :skip
   end
 end
@@ -227,7 +230,9 @@ You can define an `after_update/3` function in a projector to be called after ea
 
 ```elixir
 defmodule MyApp.ExampleProjector do
-  use Commanded.Projections.Ecto, name: "MyApp.ExampleProjector"
+  use Commanded.Projections.Ecto,
+    application: MyApp.Application,
+    name: "MyApp.ExampleProjector"
 
   project %AnEvent{name: name}, fn multi ->
     Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})

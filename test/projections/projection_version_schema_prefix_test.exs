@@ -5,12 +5,15 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
 
   defmodule CustomSchemaPrefixProjector do
     use Commanded.Projections.Ecto,
+      application: TestApplication,
       name: "my-custom-schema-prefix-projector",
       schema_prefix: "my-awesome-schema-prefix"
   end
 
   defmodule DefaultSchemaPrefixProjector do
-    use Commanded.Projections.Ecto, name: "default-schema-prefix-projector"
+    use Commanded.Projections.Ecto,
+      application: TestApplication,
+      name: "default-schema-prefix-projector"
   end
 
   setup do
@@ -20,6 +23,7 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
       Application.put_env(:commanded_ecto_projections, :schema_prefix, schema_prefix)
     end)
 
+    start_supervised!(TestApplication)
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
@@ -39,7 +43,9 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
     Application.put_env(:commanded_ecto_projections, :schema_prefix, "app-config-schema-prefix")
 
     defmodule AppConfigSchemaPrefixProjector do
-      use Commanded.Projections.Ecto, name: "app-config-schema-prefix-projector"
+      use Commanded.Projections.Ecto,
+        application: TestApplication,
+        name: "app-config-schema-prefix-projector"
     end
 
     prefix = AppConfigSchemaPrefixProjector.ProjectionVersion.__schema__(:prefix)
@@ -54,6 +60,7 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
   test "should update the ProjectionVersion with a schema prefix" do
     defmodule TestPrefixProjector do
       use Commanded.Projections.Ecto,
+        application: TestApplication,
         name: "test-projector",
         schema_prefix: "test"
 

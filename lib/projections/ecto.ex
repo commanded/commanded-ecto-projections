@@ -6,6 +6,7 @@ defmodule Commanded.Projections.Ecto do
 
       defmodule Projector do
         use Commanded.Projections.Ecto,
+          application: MyApp.Application,
           name: "my-projection",
           repo: MyRepo,
           schema_prefix: "my-prefix",
