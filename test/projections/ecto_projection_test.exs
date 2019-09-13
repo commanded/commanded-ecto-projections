@@ -30,7 +30,7 @@ defmodule Commanded.Projections.EctoProjectionTest do
   end
 
   defmodule Projector do
-    use Commanded.Projections.Ecto, name: "Projector"
+    use Commanded.Projections.Ecto, application: TestApplication, name: "Projector"
 
     project %AnEvent{name: name}, _metadata, fn multi ->
       Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
@@ -46,6 +46,7 @@ defmodule Commanded.Projections.EctoProjectionTest do
   end
 
   setup do
+    start_supervised!(TestApplication)
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
@@ -106,7 +107,7 @@ defmodule Commanded.Projections.EctoProjectionTest do
                    fn ->
                      Code.eval_string("""
                      defmodule UnconfiguredProjector do
-                       use Commanded.Projections.Ecto, name: "projector"
+                       use Commanded.Projections.Ecto, application: TestApplication, name: "projector"
                      end
                      """)
                    end
@@ -124,6 +125,7 @@ defmodule Commanded.Projections.EctoProjectionTest do
       assert Code.eval_string("""
              defmodule ProjectorConfiguredViaOpts do
                use Commanded.Projections.Ecto,
+                 application: TestApplication,
                  name: "projector",
                  repo: Commanded.Projections.Repo
              end
@@ -137,7 +139,7 @@ defmodule Commanded.Projections.EctoProjectionTest do
     assert_raise RuntimeError, "UnnamedProjector expects :name to be given", fn ->
       Code.eval_string("""
       defmodule UnnamedProjector do
-        use Commanded.Projections.Ecto
+        use Commanded.Projections.Ecto, application: TestApplication
       end
       """)
     end

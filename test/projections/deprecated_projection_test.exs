@@ -19,13 +19,14 @@ defmodule Commanded.Projections.DeprecatedProjectionTest do
   end
 
   setup do
+    start_supervised!(TestApplication)
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
   test "should handle a projected event" do
     capture_io(:stderr, fn ->
       defmodule DeprecatedProjector do
-        use Commanded.Projections.Ecto, name: "DeprecatedProjector"
+        use Commanded.Projections.Ecto, application: TestApplication, name: "DeprecatedProjector"
 
         project %AnEvent{name: name}, _metadata do
           Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
@@ -42,7 +43,9 @@ defmodule Commanded.Projections.DeprecatedProjectionTest do
   test "should warn project/2 macro deprecated" do
     assert capture_io(:stderr, fn ->
              defmodule DeprecatedProjectorWarn2 do
-               use Commanded.Projections.Ecto, name: "DeprecatedProjectorWarn2"
+               use Commanded.Projections.Ecto,
+                 application: TestApplication,
+                 name: "DeprecatedProjectorWarn2"
 
                project %AnEvent{name: name} do
                  Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
@@ -55,7 +58,9 @@ defmodule Commanded.Projections.DeprecatedProjectionTest do
   test "should warn project/3 macro deprecated" do
     assert capture_io(:stderr, fn ->
              defmodule DeprecatedProjectorWarn3 do
-               use Commanded.Projections.Ecto, name: "DeprecatedProjectorWarn3"
+               use Commanded.Projections.Ecto,
+                 application: TestApplication,
+                 name: "DeprecatedProjectorWarn3"
 
                project %AnEvent{name: name}, _metadata do
                  Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})

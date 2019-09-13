@@ -5,11 +5,6 @@ config :logger, :console, level: :warn, format: "[$level] $message\n"
 
 config :ex_unit, capture_log: true
 
-config :commanded, event_store_adapter: Commanded.EventStore.Adapters.InMemory
-
-config :commanded, Commanded.EventStore.Adapters.InMemory,
-  serializer: Commanded.Serialization.JsonSerializer
-
 config :commanded_ecto_projections,
   ecto_repos: [Commanded.Projections.Repo],
   repo: Commanded.Projections.Repo

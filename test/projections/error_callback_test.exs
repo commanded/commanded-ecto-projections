@@ -32,7 +32,7 @@ defmodule Commanded.Projections.ErrorCallbackTest do
   end
 
   defmodule ErrorProjector do
-    use Commanded.Projections.Ecto, name: "ErrorProjector"
+    use Commanded.Projections.Ecto, application: TestApplication, name: "ErrorProjector"
 
     project %AnEvent{name: name, pid: pid} = event, fn multi ->
       send(pid, event)
@@ -78,6 +78,7 @@ defmodule Commanded.Projections.ErrorCallbackTest do
   end
 
   setup do
+    start_supervised!(TestApplication)
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
@@ -89,10 +90,7 @@ defmodule Commanded.Projections.ErrorCallbackTest do
   end
 
   describe "`error` callback function" do
-    setup [
-      :start_commanded,
-      :start_projector
-    ]
+    setup [:start_projector]
 
     test "should be called on error", %{projector: projector} do
       event = %ErrorEvent{pid: self()}
@@ -168,16 +166,6 @@ defmodule Commanded.Projections.ErrorCallbackTest do
       assert_projections(Projection, ["AnEvent"])
       assert_seen_event("ErrorProjector", 3)
     end
-  end
-
-  defp start_commanded(_context) do
-    {:ok, _app} = Application.ensure_all_started(:commanded)
-
-    on_exit(fn ->
-      :ok = Application.stop(:commanded)
-    end)
-
-    :ok
   end
 
   defp start_projector(_context) do
