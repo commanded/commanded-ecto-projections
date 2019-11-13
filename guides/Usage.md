@@ -189,8 +189,7 @@ When using a prefix for your Ecto schemas you might also want to change the pref
 1. Provide a global prefix via the config:
 
     ```elixir
-    config :commanded_ecto_projections,
-      schema_prefix: "example_schema_prefix"
+    config :commanded_ecto_projections, schema_prefix: "example_schema_prefix"
     ```
 
 2. Provide the prefix to an individual projection:
@@ -204,6 +203,39 @@ When using a prefix for your Ecto schemas you might also want to change the pref
         schema_prefix: "example_schema_prefix"
     end
     ```
+
+3. Generate an Ecto migration in your app:
+
+    ```console
+    $ mix ecto.gen.migration create_schema_projection_versions
+    ```
+
+4. Modify the generated migration, in `priv/repo/migrations`, to create the schema and a `projection_versions` table for the schema:
+
+    ```elixir
+    defmodule CreateSchemaProjectionVersions do
+      use Ecto.Migration
+
+      def up do
+        execute("CREATE SCHEMA example_schema_prefix")
+
+        create table(:projection_versions, primary_key: false, prefix: "example_schema_prefix") do
+          add(:projection_name, :text, primary_key: true)
+          add(:last_seen_event_number, :bigint)
+
+          timestamps(type: :naive_datetime_usec)
+        end
+      end
+
+      def down do
+        drop(table(:projection_versions, prefix: "example_schema_prefix"))
+
+        execute("DROP SCHEMA example_schema_prefix")
+      end        
+    end
+    ```
+
+    Note you will need to do this for each schema prefix you use.
 
 ## Rebuilding a projection
 
