@@ -1,7 +1,7 @@
 defmodule Commanded.Projections.Ecto.Mixfile do
   use Mix.Project
 
-  @version "1.0.0-rc.0"
+  @version "1.0.0"
 
   def project do
     [
@@ -33,7 +33,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
   defp deps do
     [
-      {:commanded, "~> 1.0.0-rc.0"},
+      {:commanded, "~> 1.0"},
       {:ecto, "~> 3.2", runtime: false},
       {:ecto_sql, "~> 3.2", runtime: false},
       {:postgrex, ">= 0.0.0", only: :test},
@@ -43,7 +43,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
       # Test & build tooling
       {:ex_doc, ">= 0.0.0", only: :dev},
-      {:mix_test_watch, "~> 0.9", only: :dev, runtime: false}
+      {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
     ]
   end
 

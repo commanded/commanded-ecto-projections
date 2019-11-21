@@ -1,10 +1,14 @@
 # Changelog
 
-## v1.0.0-rc.0
+## v1.0.0
 
+### Enhancements
+
+- Support multiple Commanded apps ([#25](https://github.com/commanded/commanded-ecto-projections/pull/25)).
 - Add `.formatter.exs` to Hex package ([#19](https://github.com/commanded/commanded-ecto-projections/pull/19)).
 - Add microseconds to timestamp fields in `projection_versions` ([#22](https://github.com/commanded/commanded-ecto-projections/pull/22)).
-- Support multiple Commanded apps ([#25](https://github.com/commanded/commanded-ecto-projections/pull/25)).
+
+---
 
 ## v0.8.0
 
@@ -31,6 +35,8 @@
 
   The previous `do` block approach is still supported, but has been deprecated. It will be removed in the next release.
 
+---
+
 ## v0.7.1
 
 ### Bug fixes
@@ -43,6 +49,8 @@
 
 - Support Commanded's event handler `error/3` callback ([#12](https://github.com/commanded/commanded-ecto-projections/pull/12)).
 
+---
+
 ## v0.6.0
 
 ### Enhancements
@@ -50,12 +58,15 @@
 - Pass through any additional projector configuration options to Commanded event handler.
   Allows new Commanded features to be used without updating this library (e.g. specify `consistency` option).
 
+---
+
 ## v0.5.0
 
 ### Enhancements
 
 - Allow an Ecto schema prefix to be defined in config or per handler ([#4](https://github.com/commanded/commanded-ecto-projections/pull/4)).
 
+---
 
 ## v0.4.0
 
