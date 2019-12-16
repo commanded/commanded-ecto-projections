@@ -3,17 +3,8 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
 
   alias Commanded.Projections.Repo
 
-  defmodule CustomSchemaPrefixProjector do
-    use Commanded.Projections.Ecto,
-      application: TestApplication,
-      name: "my-custom-schema-prefix-projector",
-      schema_prefix: "my-awesome-schema-prefix"
-  end
-
-  defmodule DefaultSchemaPrefixProjector do
-    use Commanded.Projections.Ecto,
-      application: TestApplication,
-      name: "default-schema-prefix-projector"
+  defmodule AnEvent do
+    defstruct [:pid, name: "AnEvent"]
   end
 
   setup do
@@ -27,50 +18,86 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
-  test "should support default `nil` schema prefix in ProjectionVersion" do
-    prefix = DefaultSchemaPrefixProjector.ProjectionVersion.__schema__(:prefix)
+  describe "schema prefix" do
+    test "should default to `nil` schema prefix when not specified" do
+      defmodule DefaultSchemaPrefixProjector do
+        use Commanded.Projections.Ecto,
+          application: TestApplication,
+          name: "default-schema-prefix-projector"
+      end
 
-    assert prefix == nil
-  end
-
-  test "should have custom schema prefix in ProjectionVersion" do
-    prefix = CustomSchemaPrefixProjector.ProjectionVersion.__schema__(:prefix)
-
-    assert prefix == "my-awesome-schema-prefix"
-  end
-
-  test "should allow custom schema prefix in application config" do
-    Application.put_env(:commanded_ecto_projections, :schema_prefix, "app-config-schema-prefix")
-
-    defmodule AppConfigSchemaPrefixProjector do
-      use Commanded.Projections.Ecto,
-        application: TestApplication,
-        name: "app-config-schema-prefix-projector"
+      assert_schema_prefix(DefaultSchemaPrefixProjector, nil)
     end
 
-    prefix = AppConfigSchemaPrefixProjector.ProjectionVersion.__schema__(:prefix)
+    test "should support static schema prefix" do
+      defmodule StaticSchemaPrefixProjector do
+        use Commanded.Projections.Ecto,
+          application: TestApplication,
+          name: "static-schema-prefix-projector",
+          schema_prefix: "static-schema-prefix"
+      end
 
-    assert prefix == "app-config-schema-prefix"
-  end
-
-  defmodule AnEvent do
-    defstruct [:name]
-  end
-
-  test "should update the ProjectionVersion with a schema prefix" do
-    defmodule TestPrefixProjector do
-      use Commanded.Projections.Ecto,
-        application: TestApplication,
-        name: "test-projector",
-        schema_prefix: "test"
-
-      project(%AnEvent{}, & &1)
+      assert_schema_prefix(StaticSchemaPrefixProjector, "static-schema-prefix")
     end
 
-    alias TestPrefixProjector.ProjectionVersion
+    test "should support static schema prefix in application config" do
+      Application.put_env(:commanded_ecto_projections, :schema_prefix, "app-config-schema-prefix")
 
-    TestPrefixProjector.handle(%AnEvent{}, %{event_number: 1})
+      defmodule AppConfigSchemaPrefixProjector do
+        use Commanded.Projections.Ecto,
+          application: TestApplication,
+          name: "app-config-schema-prefix-projector"
+      end
 
-    assert Repo.get(ProjectionVersion, "test-projector").last_seen_event_number == 1
+      assert_schema_prefix(AppConfigSchemaPrefixProjector, "app-config-schema-prefix")
+    end
+
+    test "should support dynamic schema prefix" do
+      defmodule DynamicSchemaPrefixProjector do
+        use Commanded.Projections.Ecto,
+          application: TestApplication,
+          name: "dynamic-schema-prefix-projector",
+          schema_prefix: fn _event -> "dynamic-schema-prefix" end
+      end
+
+      assert_schema_prefix(DynamicSchemaPrefixProjector, "dynamic-schema-prefix")
+    end
+
+    test "should support optional `schema_prefix` callback function" do
+      defmodule SchemaPrefixCallbackProjector do
+        use Commanded.Projections.Ecto,
+          application: TestApplication,
+          name: "schema-prefix-callback-projector"
+
+        @impl Commanded.Projections.Ecto
+        def schema_prefix(_event), do: "callback-schema-prefix"
+      end
+
+      assert_schema_prefix(SchemaPrefixCallbackProjector, "callback-schema-prefix")
+    end
+
+    test "should update the ProjectionVersion with a schema prefix" do
+      defmodule TestPrefixProjector do
+        use Commanded.Projections.Ecto,
+          application: TestApplication,
+          name: "test-projector",
+          schema_prefix: "test"
+
+        project(%AnEvent{}, & &1)
+      end
+
+      alias TestPrefixProjector.ProjectionVersion
+
+      TestPrefixProjector.handle(%AnEvent{}, %{event_number: 1})
+
+      assert Repo.get(ProjectionVersion, "test-projector", prefix: "test").last_seen_event_number ==
+               1
+    end
+  end
+
+  defp assert_schema_prefix(projector, expected_prefix) do
+    prefix = apply(projector, :schema_prefix, [%AnEvent{}])
+
+    assert prefix == expected_prefix
   end
 end
