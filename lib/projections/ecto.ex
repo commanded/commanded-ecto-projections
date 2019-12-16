@@ -91,18 +91,14 @@ defmodule Commanded.Projections.Ecto do
                   version
               end
 
-            if version.last_seen_event_number == nil ||
+            if is_nil(version.last_seen_event_number) ||
                  version.last_seen_event_number < event_number do
               {:ok, %{version: version}}
             else
               {:error, :already_seen_event}
             end
           end)
-          |> Ecto.Multi.update(
-            :projection_version,
-            changeset,
-            prefix: prefix
-          )
+          |> Ecto.Multi.update(:projection_version, changeset, prefix: prefix)
 
         with %Ecto.Multi{} = multi <- apply_projection_to_multi(multi, multi_fn),
              {:ok, changes} <- attempt_transaction(multi) do
