@@ -103,7 +103,7 @@ defmodule Commanded.Projections.Ecto do
         with %Ecto.Multi{} = multi <- apply_projection_to_multi(multi, multi_fn),
              {:ok, changes} <- attempt_transaction(multi) do
           if function_exported?(__MODULE__, :after_update, 3) do
-            __MODULE__.after_update(event, metadata, changes)
+            apply(__MODULE__, :after_update, [event, metadata, changes])
           else
             :ok
           end
