@@ -28,6 +28,13 @@ defmodule Commanded.Projections.Ecto do
 
   """
 
+  @callback after_update(event :: struct, metadata :: map, changes :: Ecto.Multi.changes()) ::
+              :ok | {:error, any}
+
+  @callback schema_prefix(event :: struct) :: String.t()
+
+  @optional_callbacks [after_update: 3, schema_prefix: 1]
+
   defmacro __using__(opts) do
     opts = opts || []
 
@@ -35,17 +42,19 @@ defmodule Commanded.Projections.Ecto do
       opts[:schema_prefix] || Application.get_env(:commanded_ecto_projections, :schema_prefix)
 
     quote location: :keep do
+      @behaviour Commanded.Projections.Ecto
+
       @opts unquote(opts)
       @repo @opts[:repo] || Application.get_env(:commanded_ecto_projections, :repo) ||
               raise("Commanded Ecto projections expects :repo to be configured in environment")
       @projection_name @opts[:name] || raise("#{inspect(__MODULE__)} expects :name to be given")
-      @schema_prefix unquote(schema_prefix)
       @timeout @opts[:timeout] || :infinity
 
       # Pass through any other configuration to the event handler
       @handler_opts Keyword.drop(@opts, [:repo, :schema_prefix, :timeout])
 
-      unquote(__include_projection_version_schema__(schema_prefix))
+      unquote(__include_schema_prefix__(schema_prefix))
+      unquote(__include_projection_version_schema__())
 
       use Ecto.Schema
       use Commanded.Event.Handler, @handler_opts
@@ -54,53 +63,56 @@ defmodule Commanded.Projections.Ecto do
       import Ecto.Query
       import unquote(__MODULE__)
 
-      def update_projection(event, %{event_number: event_number} = metadata, multi_fn) do
+      def update_projection(event, metadata, multi_fn) do
+        %{event_number: event_number} = metadata
+
         changeset =
           ProjectionVersion.changeset(%ProjectionVersion{projection_name: @projection_name}, %{
             last_seen_event_number: event_number
           })
 
+        prefix = schema_prefix(event)
+
         multi =
           Ecto.Multi.new()
-          |> Ecto.Multi.run(:verify_projection_version, fn _repo, _changes ->
+          |> Ecto.Multi.run(:verify_projection_version, fn repo, _changes ->
             version =
-              case @repo.get(ProjectionVersion, @projection_name) do
+              case repo.get(ProjectionVersion, @projection_name, prefix: prefix) do
                 nil ->
-                  @repo.insert!(%ProjectionVersion{
-                    projection_name: @projection_name,
-                    last_seen_event_number: 0
-                  })
+                  repo.insert!(
+                    %ProjectionVersion{
+                      projection_name: @projection_name,
+                      last_seen_event_number: 0
+                    },
+                    prefix: prefix
+                  )
 
                 version ->
                   version
               end
 
-            if version.last_seen_event_number == nil ||
+            if is_nil(version.last_seen_event_number) ||
                  version.last_seen_event_number < event_number do
               {:ok, %{version: version}}
             else
               {:error, :already_seen_event}
             end
           end)
-          |> Ecto.Multi.update(
-            :projection_version,
-            changeset,
-            prefix: unquote(schema_prefix)
-          )
+          |> Ecto.Multi.update(:projection_version, changeset, prefix: prefix)
 
         with %Ecto.Multi{} = multi <- apply_projection_to_multi(multi, multi_fn),
              {:ok, changes} <- attempt_transaction(multi) do
-          after_update(event, metadata, changes)
+          if function_exported?(__MODULE__, :after_update, 3) do
+            __MODULE__.after_update(event, metadata, changes)
+          else
+            :ok
+          end
         else
           {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
           {:error, _stage, error, _changes} -> {:error, error}
           {:error, error} -> {:error, error}
         end
       end
-
-      def after_update(_event, _metadata, _changes), do: :ok
-
-      defoverridable after_update: 3
 
       defp apply_projection_to_multi(%Ecto.Multi{} = multi, multi_fn)
            when is_function(multi_fn, 1) do
@@ -118,10 +130,33 @@ defmodule Commanded.Projections.Ecto do
           e -> {:error, e}
         end
       end
+
+      defoverridable schema_prefix: 1
     end
   end
 
-  defp __include_projection_version_schema__(prefix) do
+  defp __include_schema_prefix__(schema_prefix) do
+    quote do
+      cond do
+        is_nil(unquote(schema_prefix)) ->
+          def schema_prefix(_event), do: nil
+
+        is_binary(unquote(schema_prefix)) ->
+          def schema_prefix(_event), do: unquote(schema_prefix)
+
+        is_function(unquote(schema_prefix), 1) ->
+          def schema_prefix(event), do: apply(unquote(schema_prefix), [event])
+
+        true ->
+          raise ArgumentError,
+            message:
+              "expected :schema_prefix option to be a string or a one-arity function, but got: " <>
+                inspect(unquote(schema_prefix))
+      end
+    end
+  end
+
+  defp __include_projection_version_schema__ do
     quote do
       defmodule ProjectionVersion do
         @moduledoc false
@@ -131,7 +166,6 @@ defmodule Commanded.Projections.Ecto do
         import Ecto.Changeset
 
         @primary_key {:projection_name, :string, []}
-        @schema_prefix unquote(prefix)
 
         schema "projection_versions" do
           field(:last_seen_event_number, :integer)
