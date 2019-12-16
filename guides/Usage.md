@@ -173,6 +173,7 @@ defmodule MyApp.ExampleProjector do
     Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
   end
 
+  @impl Commanded.Projections.Ecto
   def after_update(event, metadata, changes) do
     # Use the event, metadata, or `Ecto.Multi` changes and return `:ok`
     :ok
@@ -184,15 +185,16 @@ You could use this function to notify subscribers that the read model has been u
 
 ## Schema prefix
 
-When using a prefix for your Ecto schemas you might also want to change the prefix for the `ProjectionVersion` schema. There are two options to do this:
+When using a prefix for your Ecto schemas you might also want to change the prefix for the `ProjectionVersion` schema. There are three options to do this:
 
-1. Provide a global prefix via the config:
+1. Define a global static prefix via environment config:
 
     ```elixir
+    # config/config.exs
     config :commanded_ecto_projections, schema_prefix: "example_schema_prefix"
     ```
 
-2. Provide the prefix to an individual projection:
+2. Provide a static prefix as a projector option:
 
     ```elixir
     defmodule MyApp.ExampleProjector do
@@ -204,13 +206,51 @@ When using a prefix for your Ecto schemas you might also want to change the pref
     end
     ```
 
-3. Generate an Ecto migration in your app:
+3. Provide a one-arity function as a projector option:
+
+    ```elixir
+    defmodule MyApp.ExampleProjector do
+      use Commanded.Projections.Ecto,
+        application: MyApp.Application,
+        repo: MyApp.Projections.Repo,    
+        name: "example_projection",
+        schema_prefix: fn event -> "example_schema_prefix" end
+    end
+    ```
+
+    The function will receive the event as the single argument allowing you to use the same or a different schema for each event.
+
+4. Define a `schema_prefix/1` callback function:
+
+    ```elixir
+    defmodule MyApp.ExampleProjector do
+      use Commanded.Projections.Ecto,
+        application: MyApp.Application,
+        name: "example_projection"
+
+      @impl Commanded.Projections.Ecto
+      def schema_prefix(event), do: "example_schema_prefix"
+    end
+    ```
+
+    The function will receive the event as the single argument allowing you to use the same or a different schema for each event.
+
+    An example usage could be for tenant specific projections where each tenant's data is projected and stored in a separate database schema:
+
+    ```elixir
+    @impl Commanded.Projections.Ecto
+    def schema_prefix(%_{tenant: tenant}), do: tenant
+    ```
+
+### Migrations with a schema prefix
+
+1. Generate an Ecto migration in your app:
 
     ```console
     $ mix ecto.gen.migration create_schema_projection_versions
     ```
 
-4. Modify the generated migration, in `priv/repo/migrations`, to create the schema and a `projection_versions` table for the schema:
+2. Modify the generated migration, in `priv/repo/migrations`, to create the schema and a `projection_versions` table for the schema:
 
     ```elixir
     defmodule CreateSchemaProjectionVersions do
