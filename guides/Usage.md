@@ -185,7 +185,7 @@ You could use this function to notify subscribers that the read model has been u
 
 ## Schema prefix
 
-When using a prefix for your Ecto schemas you might also want to change the prefix for the `ProjectionVersion` schema. There are three options to do this:
+When using a prefix for your Ecto schemas you might also want to change the prefix for the `ProjectionVersion` schema. There are a number of options to do this:
 
 1. Define a global static prefix via environment config:
 
@@ -194,7 +194,7 @@ When using a prefix for your Ecto schemas you might also want to change the pref
     config :commanded_ecto_projections, schema_prefix: "example_schema_prefix"
     ```
 
-2. Provide a static prefix as a projector option:
+2. Provide a static `schema_prefix` as a projector option:
 
     ```elixir
     defmodule MyApp.ExampleProjector do
@@ -206,7 +206,7 @@ When using a prefix for your Ecto schemas you might also want to change the pref
     end
     ```
 
-3. Provide a one-arity function as a projector option:
+3. Provide a one-arity function as a `schema_prefix` projector option:
 
     ```elixir
     defmodule MyApp.ExampleProjector do
