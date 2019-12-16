@@ -4,7 +4,7 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
   alias Commanded.Projections.Repo
 
   defmodule AnEvent do
-    defstruct [:pid, name: "AnEvent"]
+    defstruct [:schema, name: "AnEvent"]
   end
 
   setup do
@@ -76,6 +76,26 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
       assert_schema_prefix(SchemaPrefixCallbackProjector, "callback_schema_prefix")
     end
 
+    test "should support `schema_prefix` callback function with different schema per event" do
+      defmodule SchemaPrefixPerEventCallbackProjector do
+        use Commanded.Projections.Ecto,
+          application: TestApplication,
+          name: "schema_prefix_per_event_callback_projector"
+
+        @impl Commanded.Projections.Ecto
+        def schema_prefix(%_{schema: schema}), do: schema
+      end
+
+      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %AnEvent{schema: "schema1"}) ==
+               "schema1"
+
+      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %AnEvent{schema: "schema2"}) ==
+               "schema2"
+
+      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %AnEvent{schema: "schema3"}) ==
+               "schema3"
+    end
+
     test "should update the ProjectionVersion with a schema prefix" do
       defmodule TestPrefixProjector do
         use Commanded.Projections.Ecto,
@@ -112,8 +132,12 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
   end
 
   defp assert_schema_prefix(projector, expected_prefix) do
-    prefix = apply(projector, :schema_prefix, [%AnEvent{}])
+    prefix = schema_prefix(projector, %AnEvent{})
 
     assert prefix == expected_prefix
+  end
+
+  defp schema_prefix(projector, event) do
+    apply(projector, :schema_prefix, [event])
   end
 end
