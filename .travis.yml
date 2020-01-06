@@ -1,7 +1,18 @@
 language: elixir
 
+sudo: required
+dist: trusty
+
+addons:
+  postgresql: "9.6"
+
+cache:
+  directories:
+  - priv/plts
+  - deps
+
 elixir:
-  - 1.9.1
+  - 1.9.4
 
 otp_release:
   - 22.0
@@ -12,8 +23,6 @@ services:
 before_script:
   - MIX_ENV=test mix do ecto.create, ecto.migrate
 
-sudo: required
-dist: trusty
-
-addons:
-  postgresql: "9.6"
+script:
+  - mix test
+  - travis_wait 30 mix dialyzer --halt-exit-status

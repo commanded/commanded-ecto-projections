@@ -14,6 +14,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       deps: deps(),
+      dialyzer: dialyzer(),
       docs: docs()
     ]
   end
@@ -42,6 +43,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       {:jason, "~> 1.1", optional: true},
 
       # Test & build tooling
+      {:dialyxir, "~> 1.0.0-rc.7", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
     ]
@@ -51,6 +53,14 @@ defmodule Commanded.Projections.Ecto.Mixfile do
     """
     Read model projections for Commanded using Ecto.
     """
+  end
+
+  defp dialyzer do
+    [
+      plt_add_apps: [:ex_unit, :ecto],
+      plt_add_deps: :app_tree,
+      plt_file: {:no_warn, "priv/plts/commanded_ecto_projections.plt"}
+    ]
   end
 
   defp docs do

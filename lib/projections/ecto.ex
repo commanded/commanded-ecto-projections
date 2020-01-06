@@ -31,7 +31,7 @@ defmodule Commanded.Projections.Ecto do
   @callback after_update(event :: struct, metadata :: map, changes :: Ecto.Multi.changes()) ::
               :ok | {:error, any}
 
-  @callback schema_prefix(event :: struct) :: String.t()
+  @callback schema_prefix(event :: struct) :: String.t() | nil
 
   @optional_callbacks [after_update: 3, schema_prefix: 1]
 
