@@ -246,8 +246,8 @@ When using a prefix for your Ecto schemas you might also want to change the pref
 
 1. Generate an Ecto migration in your app:
 
-    ```console
-    $ mix ecto.gen.migration create_schema_projection_versions
+    ```shell
+    mix ecto.gen.migration create_schema_projection_versions
     ```
 
 2. Modify the generated migration, in `priv/repo/migrations`, to create the schema and a `projection_versions` table for the schema:
@@ -270,7 +270,7 @@ When using a prefix for your Ecto schemas you might also want to change the pref
       def down do
         drop(table(:projection_versions, prefix: "example_schema_prefix"))
 
-        execute("DROP SCHEMA example_schema_prefix")
+        execute("DROP SCHEMA example_schema_prefix CASCADE")
       end        
     end
     ```
@@ -286,17 +286,17 @@ To rebuild a projection you will need to:
 1. Delete the row containing the last seen event for the projection name:
 
     ```SQL
-    delete from projection_versions
-    where projection_name = 'example_projection';
+    DELETE FROM projection_versions
+    WHERE projection_name = 'example_projection';
     ```
 
 2. Truncate the tables that are being populated by the projection, and restart their identity:
 
     ```SQL
-    truncate table
+    TRUNCATE TABLE
       example_projections,
       other_projections
-    restart identity;
+    RESTART IDENTITY;
     ```
 
 You will also need to reset the event store subscription for the commanded event handler. This is specific to whichever event store you are using.

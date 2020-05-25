@@ -5,7 +5,7 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
   alias Commanded.Projections.Repo
 
   defmodule AnEvent do
-    defstruct name: "AnEvent", pid: nil
+    defstruct [:pid, name: "AnEvent"]
   end
 
   defmodule Projection do
@@ -26,7 +26,7 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
     end
 
     def after_update(event, metadata, changes) do
-      send(event.pid, {event, metadata, changes})
+      send(event.pid, {:after_update, event, metadata, changes})
       :ok
     end
   end
@@ -36,13 +36,13 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
-  test "should call `after_update` function with event and metadata" do
+  test "should call `after_update/3` function with event, metadata, and changes" do
     event = %AnEvent{pid: self()}
     metadata = %{event_number: 1}
 
     assert :ok == Projector.handle(event, metadata)
 
-    assert_receive {^event, ^metadata, changes}
+    assert_receive {:after_update, ^event, ^metadata, changes}
 
     case Map.get(changes, :my_projection) do
       %Projection{name: "AnEvent"} -> :ok

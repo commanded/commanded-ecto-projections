@@ -64,7 +64,7 @@ defmodule Commanded.Projections.Ecto do
       import unquote(__MODULE__)
 
       def update_projection(event, metadata, multi_fn) do
-        %{event_number: event_number} = metadata
+        event_number = Map.fetch!(metadata, :event_number)
 
         changeset =
           ProjectionVersion.changeset(%ProjectionVersion{projection_name: @projection_name}, %{

@@ -12,7 +12,7 @@ cache:
   - deps
 
 elixir:
-  - 1.9.4
+  - 1.10.3
 
 otp_release:
   - 22.0
@@ -24,5 +24,6 @@ before_script:
   - MIX_ENV=test mix do ecto.create, ecto.migrate
 
 script:
+  - mix format --check-formatted
   - mix test
-  - travis_wait 30 mix dialyzer --halt-exit-status
+  - travis_wait 30 mix dialyzer

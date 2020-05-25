@@ -1,10 +1,13 @@
 # Changelog
 
-## Next release
+## v1.1.0
 
 ### Enhancements
 
 - Dynamic schema prefix ([#28](https://github.com/commanded/commanded-ecto-projections/pull/28)).
+- Support Commanded v1.1.0.
+
+---
 
 ## v1.0.0
 

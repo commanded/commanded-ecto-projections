@@ -15,6 +15,6 @@ defmodule Commanded.Projections.Repo.Migrations.CreateProjectionVersionWithPrefi
   def down do
     drop(table(:projection_versions, prefix: "test"))
 
-    execute("DROP SCHEMA test")
+    execute("DROP SCHEMA test CASCADE")
   end
 end
