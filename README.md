@@ -40,7 +40,7 @@ You should include unit tests to cover any changes. Run `mix test` to execute th
 
 ```console
 mix deps.get
-MIX_ENV=test mix do ecto.create, ecto.migrate
+MIX_ENV=test mix setup
 mix test
 ```
 

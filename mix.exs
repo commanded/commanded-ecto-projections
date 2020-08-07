@@ -7,8 +7,9 @@ defmodule Commanded.Projections.Ecto.Mixfile do
     [
       app: :commanded_ecto_projections,
       version: @version,
-      elixir: "~> 1.4",
+      elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
+      aliases: aliases(),
       description: description(),
       package: package(),
       build_embedded: Mix.env() == :prod,
@@ -21,13 +22,9 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
   def application do
     [
-      extra_applications: extra_applications(Mix.env())
+      extra_applications: [:logger]
     ]
   end
-
-  # Include ecto and postgrex apps in `test` environment only
-  defp extra_applications(:test), do: [:logger, :ecto, :ecto_sql, :postgrex]
-  defp extra_applications(_env), do: [:logger]
 
   defp elixirc_paths(:test), do: ["lib", "test/support"]
   defp elixirc_paths(_env), do: ["lib"]
@@ -35,8 +32,8 @@ defmodule Commanded.Projections.Ecto.Mixfile do
   defp deps do
     [
       {:commanded, "~> 1.1"},
-      {:ecto, "~> 3.4", runtime: false},
-      {:ecto_sql, "~> 3.4", runtime: false},
+      {:ecto, "~> 3.4"},
+      {:ecto_sql, "~> 3.4"},
       {:postgrex, ">= 0.0.0", only: :test},
 
       # Optional dependencies
@@ -49,6 +46,13 @@ defmodule Commanded.Projections.Ecto.Mixfile do
     ]
   end
 
+  defp aliases do
+    [
+      setup: ["ecto.create", "ecto.migrate"],
+      reset: ["ecto.drop", "setup"]
+    ]
+  end
+
   defp description do
     """
     Read model projections for Commanded using Ecto.
@@ -57,7 +61,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
   defp dialyzer do
     [
-      plt_add_apps: [:ex_unit, :ecto],
+      plt_add_apps: [:ecto, :ex_unit],
       plt_add_deps: :app_tree,
       plt_file: {:no_warn, "priv/plts/commanded_ecto_projections.plt"}
     ]
