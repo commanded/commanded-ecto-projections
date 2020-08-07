@@ -8,7 +8,7 @@ defmodule Commanded.Projections.Ecto do
         use Commanded.Projections.Ecto,
           application: MyApp.Application,
           name: "my-projection",
-          repo: MyRepo,
+          repo: MyApp.Repo,
           schema_prefix: "my-prefix",
           timeout: :infinity
 
@@ -28,13 +28,6 @@ defmodule Commanded.Projections.Ecto do
 
   """
 
-  @callback after_update(event :: struct, metadata :: map, changes :: Ecto.Multi.changes()) ::
-              :ok | {:error, any}
-
-  @callback schema_prefix(event :: struct) :: String.t() | nil
-
-  @optional_callbacks [after_update: 3, schema_prefix: 1]
-
   defmacro __using__(opts) do
     opts = opts || []
 
@@ -47,7 +40,6 @@ defmodule Commanded.Projections.Ecto do
       @opts unquote(opts)
       @repo @opts[:repo] || Application.get_env(:commanded_ecto_projections, :repo) ||
               raise("Commanded Ecto projections expects :repo to be configured in environment")
-      @projection_name @opts[:name] || raise("#{inspect(__MODULE__)} expects :name to be given")
       @timeout @opts[:timeout] || :infinity
 
       # Pass through any other configuration to the event handler
@@ -64,12 +56,12 @@ defmodule Commanded.Projections.Ecto do
       import unquote(__MODULE__)
 
       def update_projection(event, metadata, multi_fn) do
+        projection_name = Map.fetch!(metadata, :handler_name)
         event_number = Map.fetch!(metadata, :event_number)
 
         changeset =
-          ProjectionVersion.changeset(%ProjectionVersion{projection_name: @projection_name}, %{
-            last_seen_event_number: event_number
-          })
+          %ProjectionVersion{projection_name: projection_name}
+          |> ProjectionVersion.changeset(%{last_seen_event_number: event_number})
 
         prefix = schema_prefix(event)
 
@@ -77,11 +69,11 @@ defmodule Commanded.Projections.Ecto do
           Ecto.Multi.new()
           |> Ecto.Multi.run(:verify_projection_version, fn repo, _changes ->
             version =
-              case repo.get(ProjectionVersion, @projection_name, prefix: prefix) do
+              case repo.get(ProjectionVersion, projection_name, prefix: prefix) do
                 nil ->
                   repo.insert!(
                     %ProjectionVersion{
-                      projection_name: @projection_name,
+                      projection_name: projection_name,
                       last_seen_event_number: 0
                     },
                     prefix: prefix
@@ -91,8 +83,7 @@ defmodule Commanded.Projections.Ecto do
                   version
               end
 
-            if is_nil(version.last_seen_event_number) ||
-                 version.last_seen_event_number < event_number do
+            if version.last_seen_event_number < event_number do
               {:ok, %{version: version}}
             else
               {:error, :already_seen_event}
@@ -110,7 +101,7 @@ defmodule Commanded.Projections.Ecto do
         else
           {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
           {:error, _stage, error, _changes} -> {:error, error}
-          {:error, error} -> {:error, error}
+          {:error, _error} = reply -> reply
         end
       end
 
@@ -134,6 +125,50 @@ defmodule Commanded.Projections.Ecto do
       defoverridable schema_prefix: 1
     end
   end
+
+  ## User callbacks
+
+  @optional_callbacks [after_update: 3, schema_prefix: 1]
+
+  @doc """
+  The optional `after_update/3` callback function defined in a projector is called after
+  each projected event.
+
+  The function receives the event, its metadata, and all changes from the
+  `Ecto.Multi` struct that were executed within the database transaction.
+
+  You could use this function to notify subscribers that the read model has been
+  updated, such as by publishling changes via Phoenix PubSub channels.
+
+  ## Example
+
+      defmodule MyApp.ExampleProjector do
+        use Commanded.Projections.Ecto,
+          application: MyApp.Application,
+          repo: MyApp.Projections.Repo,
+          name: "MyApp.ExampleProjector"
+
+        project %AnEvent{name: name}, fn multi ->
+          Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
+        end
+
+        @impl Commanded.Projections.Ecto
+        def after_update(event, metadata, changes) do
+          # Use the event, metadata, or `Ecto.Multi` changes and return `:ok`
+          :ok
+        end
+      end
+
+  """
+  @callback after_update(event :: struct, metadata :: map, changes :: Ecto.Multi.changes()) ::
+              :ok | {:error, any}
+
+  @doc """
+  The optional `schema_prefix/1` callback function defined in a projector is
+  used to set the schema of the `projection_versions` table used by the
+  projector for idempotency checks.
+  """
+  @callback schema_prefix(event :: struct) :: String.t() | nil
 
   defp __include_schema_prefix__(schema_prefix) do
     quote do
@@ -197,6 +232,20 @@ defmodule Commanded.Projections.Ecto do
     end
   end
 
+  @doc """
+  Project a domain event into a read model by appending one or more operations
+  to the `Ecto.Multi` struct passed to the projection function you define
+
+  The operations will be executed in a database transaction including an
+  idempotency check to guarantee an event cannot be projected more than once.
+
+  ## Example
+
+      project %AnEvent{}, fn multi ->
+        Ecto.Multi.insert(multi, :my_projection, %MyProjection{...})
+      end
+
+  """
   defmacro project(event, lambda) do
     quote do
       def handle(unquote(event) = event, metadata) do
@@ -220,6 +269,21 @@ defmodule Commanded.Projections.Ecto do
     end
   end
 
+  @doc """
+  Project a domain event and its metadata map into a read model by appending one
+  or more operations to the `Ecto.Multi` struct passed to the projection
+  function you define.
+
+  The operations will be executed in a database transaction including an
+  idempotency check to guarantee an event cannot be projected more than once.
+
+  ## Example
+
+      project %AnEvent{}, metadata, fn multi ->
+        Ecto.Multi.insert(multi, :my_projection, %MyProjection{...})
+      end
+
+  """
   defmacro project(event, metadata, lambda) do
     quote do
       def handle(unquote(event) = event, unquote(metadata) = metadata) do

@@ -5,31 +5,9 @@ defmodule Commanded.Projections.ErrorCallbackTest do
 
   alias Commanded.Event.FailureContext
   alias Commanded.EventStore.RecordedEvent
+  alias Commanded.Projections.Events.{AnEvent, ErrorEvent, ExceptionEvent, InvalidMultiEvent}
+  alias Commanded.Projections.Projection
   alias Commanded.Projections.Repo
-
-  defmodule AnEvent do
-    defstruct [:pid, name: "AnEvent"]
-  end
-
-  defmodule ErrorEvent do
-    defstruct [:pid, name: "ErrorEvent"]
-  end
-
-  defmodule ExceptionEvent do
-    defstruct [:pid, name: "ExceptionEvent"]
-  end
-
-  defmodule InvalidMultiEvent do
-    defstruct [:pid, :name]
-  end
-
-  defmodule Projection do
-    use Ecto.Schema
-
-    schema "projections" do
-      field(:name, :string)
-    end
-  end
 
   defmodule ErrorProjector do
     use Commanded.Projections.Ecto, application: TestApplication, name: "ErrorProjector"
@@ -84,7 +62,7 @@ defmodule Commanded.Projections.ErrorCallbackTest do
 
   test "should allow returning an error tagged tuple from `project` macro" do
     event = %ErrorEvent{pid: self()}
-    metadata = %{event_number: 1}
+    metadata = %{handler_name: "ErrorProjector", event_number: 1}
 
     assert {:error, :failed} == ErrorProjector.handle(event, metadata)
   end
