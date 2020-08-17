@@ -36,18 +36,21 @@ defmodule Commanded.Projections.ErrorCallbackTest do
       Ecto.Multi.update_all(multi, :projection, query, set: [name: name])
     end
 
+    @impl Commanded.Event.Handler
     def error({:error, :failed} = error, %ErrorEvent{pid: pid}, %FailureContext{}) do
       send(pid, error)
 
       :skip
     end
 
+    @impl Commanded.Event.Handler
     def error({:error, _error} = error, %ExceptionEvent{pid: pid}, %FailureContext{}) do
       send(pid, error)
 
       :skip
     end
 
+    @impl Commanded.Event.Handler
     def error({:error, _error} = error, %InvalidMultiEvent{pid: pid}, %FailureContext{}) do
       send(pid, error)
 
@@ -67,7 +70,7 @@ defmodule Commanded.Projections.ErrorCallbackTest do
     assert {:error, :failed} == ErrorProjector.handle(event, metadata)
   end
 
-  describe "`error` callback function" do
+  describe "`error/3` callback function" do
     setup [:start_projector]
 
     test "should be called on error", %{projector: projector} do
@@ -147,7 +150,7 @@ defmodule Commanded.Projections.ErrorCallbackTest do
   end
 
   defp start_projector(_context) do
-    {:ok, projector} = ErrorProjector.start_link()
+    projector = start_supervised!(ErrorProjector)
 
     Ecto.Adapters.SQL.Sandbox.allow(Repo, self(), projector)
 
