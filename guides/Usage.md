@@ -2,7 +2,7 @@
 
 ## Creating a read model
 
-Use Ecto schemas to define your read model:
+Use `Ecto.Schema` to define one or more read models:
 
 ```elixir
 defmodule ExampleProjection do
@@ -20,7 +20,7 @@ For each read model you will need to define a module that uses the `Commanded.Pr
 
 You must specify the following options when defining an Ecto projector:
 
-- `:application` - (module) the Commanded application (e.g. `MyApp.Application`).
+- `:application` - (module or atom) the Commanded application (e.g. `MyApp.Application`).
 - `:repo` - (module) an Ecto repo (e.g. `MyApp.Projections.Repo`).
 - `:name` - (string) a unique name used to identify the event store subscription used by the projector.
 

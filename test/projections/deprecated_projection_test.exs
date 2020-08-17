@@ -5,18 +5,8 @@ defmodule Commanded.Projections.DeprecatedProjectionTest do
   import ExUnit.CaptureIO
 
   alias Commanded.Projections.Repo
-
-  defmodule AnEvent do
-    defstruct name: "AnEvent"
-  end
-
-  defmodule Projection do
-    use Ecto.Schema
-
-    schema "projections" do
-      field(:name, :string)
-    end
-  end
+  alias Commanded.Projections.Events.AnEvent
+  alias Commanded.Projections.Projection
 
   setup do
     start_supervised!(TestApplication)
@@ -33,7 +23,11 @@ defmodule Commanded.Projections.DeprecatedProjectionTest do
         end
       end
 
-      assert :ok == DeprecatedProjector.handle(%AnEvent{}, %{event_number: 1})
+      assert :ok ==
+               DeprecatedProjector.handle(%AnEvent{}, %{
+                 handler_name: "DeprecatedProjector",
+                 event_number: 1
+               })
 
       assert_projections(Projection, ["AnEvent"])
       assert_seen_event("DeprecatedProjector", 1)

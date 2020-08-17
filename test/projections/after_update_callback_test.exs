@@ -1,32 +1,24 @@
 defmodule Commanded.Projections.AfterUpdateCallbackTest do
   use ExUnit.Case
-  doctest Commanded.Projections.Ecto
 
+  alias Commanded.Projections.Events.AnEvent
+  alias Commanded.Projections.Projection
   alias Commanded.Projections.Repo
-
-  defmodule AnEvent do
-    defstruct [:pid, name: "AnEvent"]
-  end
-
-  defmodule Projection do
-    use Ecto.Schema
-
-    schema "projections" do
-      field(:name, :string)
-    end
-  end
 
   defmodule Projector do
     use Commanded.Projections.Ecto,
       application: TestApplication,
-      name: "projection"
+      name: "Projector"
 
     project %AnEvent{name: name}, fn multi ->
       Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
     end
 
     def after_update(event, metadata, changes) do
-      send(event.pid, {:after_update, event, metadata, changes})
+      %{pid: pid} = event
+
+      send(pid, {:after_update, event, metadata, changes})
+
       :ok
     end
   end
@@ -38,7 +30,7 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
 
   test "should call `after_update/3` function with event, metadata, and changes" do
     event = %AnEvent{pid: self()}
-    metadata = %{event_number: 1}
+    metadata = %{handler_name: "Projector", event_number: 1}
 
     assert :ok == Projector.handle(event, metadata)
 

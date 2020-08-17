@@ -2,10 +2,7 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
   use ExUnit.Case
 
   alias Commanded.Projections.Repo
-
-  defmodule AnEvent do
-    defstruct [:schema, name: "AnEvent"]
-  end
+  alias Commanded.Projections.Events.SchemaEvent
 
   setup do
     schema_prefix = Application.get_env(:commanded_ecto_projections, :schema_prefix)
@@ -86,13 +83,13 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
         def schema_prefix(%_{schema: schema}), do: schema
       end
 
-      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %AnEvent{schema: "schema1"}) ==
+      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %SchemaEvent{schema: "schema1"}) ==
                "schema1"
 
-      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %AnEvent{schema: "schema2"}) ==
+      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %SchemaEvent{schema: "schema2"}) ==
                "schema2"
 
-      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %AnEvent{schema: "schema3"}) ==
+      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %SchemaEvent{schema: "schema3"}) ==
                "schema3"
     end
 
@@ -100,17 +97,21 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
       defmodule TestPrefixProjector do
         use Commanded.Projections.Ecto,
           application: TestApplication,
-          name: "test_prefix_projector",
+          name: "TestPrefixProjector",
           schema_prefix: "test"
 
-        project(%AnEvent{}, & &1)
+        project(%SchemaEvent{}, & &1)
       end
 
       alias TestPrefixProjector.ProjectionVersion
 
-      :ok = TestPrefixProjector.handle(%AnEvent{}, %{event_number: 1})
+      :ok =
+        TestPrefixProjector.handle(%SchemaEvent{}, %{
+          handler_name: "TestPrefixProjector",
+          event_number: 1
+        })
 
-      projection_version = Repo.get(ProjectionVersion, "test_prefix_projector", prefix: "test")
+      projection_version = Repo.get(ProjectionVersion, "TestPrefixProjector", prefix: "test")
 
       assert projection_version.last_seen_event_number == 1
     end
@@ -132,7 +133,7 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
   end
 
   defp assert_schema_prefix(projector, expected_prefix) do
-    prefix = schema_prefix(projector, %AnEvent{})
+    prefix = schema_prefix(projector, %SchemaEvent{})
 
     assert prefix == expected_prefix
   end
