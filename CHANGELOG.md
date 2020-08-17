@@ -1,5 +1,11 @@
 # Changelog
 
+## Next release
+
+- Support runtime projector names ([#32](https://github.com/commanded/commanded-ecto-projections/pull/32)).
+
+---
+
 ## v1.1.0
 
 ### Enhancements
