@@ -63,7 +63,7 @@ defmodule Commanded.Projections.Ecto do
           %ProjectionVersion{projection_name: projection_name}
           |> ProjectionVersion.changeset(%{last_seen_event_number: event_number})
 
-        prefix = schema_prefix(event)
+        prefix = schema_prefix(event, metadata)
 
         multi =
           Ecto.Multi.new()
@@ -122,17 +122,17 @@ defmodule Commanded.Projections.Ecto do
         end
       end
 
-      defoverridable schema_prefix: 1
+      defoverridable schema_prefix: 1, schema_prefix: 2
     end
   end
 
   ## User callbacks
 
-  @optional_callbacks [after_update: 3, schema_prefix: 1]
+  @optional_callbacks [after_update: 3, schema_prefix: 1, schema_prefix: 2]
 
   @doc """
-  The optional `after_update/3` callback function defined in a projector is called after
-  each projected event.
+  The optional `after_update/3` callback function defined in a projector is
+  called after each projected event.
 
   The function receives the event, its metadata, and all changes from the
   `Ecto.Multi` struct that were executed within the database transaction.
@@ -167,25 +167,45 @@ defmodule Commanded.Projections.Ecto do
   The optional `schema_prefix/1` callback function defined in a projector is
   used to set the schema of the `projection_versions` table used by the
   projector for idempotency checks.
+
+  It is passed the event and its metadata and must return the schema name, as a
+  string, or `nil`.
   """
   @callback schema_prefix(event :: struct) :: String.t() | nil
+
+  @doc """
+  The optional `schema_prefix/2` callback function defined in a projector is
+  used to set the schema of the `projection_versions` table used by the
+  projector for idempotency checks.
+
+  It is passed the event and its metadata, and must return the schema name, as a
+  string, or `nil`
+  """
+  @callback schema_prefix(event :: struct(), metadata :: map()) :: String.t() | nil
 
   defp __include_schema_prefix__(schema_prefix) do
     quote do
       cond do
         is_nil(unquote(schema_prefix)) ->
           def schema_prefix(_event), do: nil
+          def schema_prefix(event, _metadata), do: schema_prefix(event)
 
         is_binary(unquote(schema_prefix)) ->
-          def schema_prefix(_event), do: unquote(schema_prefix)
+          def schema_prefix(_event), do: nil
+          def schema_prefix(_event, _metadata), do: unquote(schema_prefix)
 
         is_function(unquote(schema_prefix), 1) ->
-          def schema_prefix(event), do: apply(unquote(schema_prefix), [event])
+          def schema_prefix(event), do: nil
+          def schema_prefix(event, _metadata), do: apply(unquote(schema_prefix), [event])
+
+        is_function(unquote(schema_prefix), 2) ->
+          def schema_prefix(event), do: nil
+          def schema_prefix(event, metadata), do: apply(unquote(schema_prefix), [event, metadata])
 
         true ->
           raise ArgumentError,
             message:
-              "expected :schema_prefix option to be a string or a one-arity function, but got: " <>
+              "expected :schema_prefix option to be a string or a one-arity or two-arity function, but got: " <>
                 inspect(unquote(schema_prefix))
       end
     end

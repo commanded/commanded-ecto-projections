@@ -220,7 +220,21 @@ When using a prefix for your Ecto schemas you might also want to change the pref
 
     The function will receive the event as the single argument allowing you to use the same or a different schema for each event.
 
-4. Define a `schema_prefix/1` callback function:
+4. Provide a two-arity function as a `schema_prefix` projector option:
+
+    ```elixir
+    defmodule MyApp.ExampleProjector do
+      use Commanded.Projections.Ecto,
+        application: MyApp.Application,
+        repo: MyApp.Projections.Repo,    
+        name: "example_projection",
+        schema_prefix: fn event, metadata -> "example_schema_prefix" end
+    end
+    ```
+
+    The function will receive the event and its associated metadata as the two arguments allowing you to use the same or a different schema for each event. The metadata will also include the enriched fields such as the application, event handler name, and optional handler state.
+
+5. Define a `schema_prefix/1` callback function:
 
     ```elixir
     defmodule MyApp.ExampleProjector do
@@ -240,6 +254,28 @@ When using a prefix for your Ecto schemas you might also want to change the pref
     ```elixir
     @impl Commanded.Projections.Ecto
     def schema_prefix(%_{tenant: tenant}), do: tenant
+    ```
+
+6. Define a `schema_prefix/2` callback function:
+
+    ```elixir
+    defmodule MyApp.ExampleProjector do
+      use Commanded.Projections.Ecto,
+        application: MyApp.Application,
+        name: "example_projection"
+
+      @impl Commanded.Projections.Ecto
+      def schema_prefix(event, metadata), do: "example_schema_prefix"
+    end
+    ```
+
+    The function will receive the event and its associated metadata as the two arguments allowing you to use the same or a different schema for each event. The metadata will also include the enriched fields such as the application, event handler name, and optional handler state.
+
+    An example usage could be for tenant specific projections where each tenant's data is projected and stored in a separate database schema:
+
+    ```elixir
+    @impl Commanded.Projections.Ecto
+    def schema_prefix(%_{tenant: tenant}, _metadata), do: tenant
     ```
 
 ### Migrations with a schema prefix
