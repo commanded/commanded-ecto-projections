@@ -1,6 +1,6 @@
 # Changelog
 
-## Next release
+## v1.2.0
 
 - Support runtime projector names ([#32](https://github.com/commanded/commanded-ecto-projections/pull/32)).
 - Support `schema_prefix/2` function ([#33](https://github.com/commanded/commanded-ecto-projections/pull/33)).

@@ -18,13 +18,15 @@ end
 
 For each read model you will need to define a module that uses the `Commanded.Projections.Ecto` module and projects the appropriate domain events with the `project` macro.
 
-You must specify the following options when defining an Ecto projector:
+You must specify the following options when defining or starting an Ecto projector:
 
 - `:application` - (module or atom) the Commanded application (e.g. `MyApp.Application`).
-- `:repo` - (module) an Ecto repo (e.g. `MyApp.Projections.Repo`).
 - `:name` - (string) a unique name used to identify the event store subscription used by the projector.
+- `:repo` - (module) an Ecto repo (e.g. `MyApp.Projections.Repo`).
 
 Once a projector has been deployed you _should not_ change its name. Doing so will cause a new event store subscription to be created and replay all existing events.
+
+**Note:** A read model projector is just a specialised Commanded event handler `GenServer` process.
 
 ### Example
 
@@ -45,7 +47,39 @@ defmodule MyApp.ExampleProjector do
 end
 ```
 
-**Note:** A read model projector is just a specialised Commanded event handler.
+#### Runtime configuration
+
+The `:application` and `:name` options can be provided at runtime, but `:repo` must be specified at compile-time.
+
+```elixir
+defmodule MyApp.ExampleProjector do
+  use Commanded.Projections.Ecto,
+    repo: MyApp.Projections.Repo
+end
+```
+
+Started with:
+
+```elixir
+{:ok, pid} = ExampleProjector.start_link(application: MyApp.Application, name: "example_projection")
+```
+
+Or supervised:
+
+```elixir
+Supervisor.start_link([
+  {ExampleProjector, application: MyApp.Application, name: "example_projection"}
+], strategy: :one_for_one)
+```
+
+Runtime configuration allows the same projector to be run more than once, with each instance using a separate application or name:
+
+```elixir
+Supervisor.start_link([
+  {ExampleProjector, application: App1, name: "App1.Projector"},
+  {ExampleProjector, application: App2, name: "App2.Projector"}
+], strategy: :one_for_one)
+```
 
 ### Using the `project` macro
 
