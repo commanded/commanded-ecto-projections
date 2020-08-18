@@ -49,18 +49,29 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
       assert_schema_prefix(AppConfigSchemaPrefixProjector, "app_config_schema_prefix")
     end
 
-    test "should support dynamic schema prefix" do
-      defmodule DynamicSchemaPrefixProjector do
+    test "should support dynamic schema prefix using one-arity anonymous function" do
+      defmodule DynamicOneAritySchemaPrefixProjector do
         use Commanded.Projections.Ecto,
           application: TestApplication,
           name: "dynamic_schema_prefix_projector",
           schema_prefix: fn _event -> "dynamic_schema_prefix" end
       end
 
-      assert_schema_prefix(DynamicSchemaPrefixProjector, "dynamic_schema_prefix")
+      assert_schema_prefix(DynamicOneAritySchemaPrefixProjector, "dynamic_schema_prefix")
     end
 
-    test "should support optional `schema_prefix` callback function" do
+    test "should support dynamic schema prefix using two-arity anonymous function" do
+      defmodule DynamicTwoAritySchemaPrefixProjector do
+        use Commanded.Projections.Ecto,
+          application: TestApplication,
+          name: "dynamic_schema_prefix_projector",
+          schema_prefix: fn _event, _metadata -> "dynamic_schema_prefix" end
+      end
+
+      assert_schema_prefix(DynamicTwoAritySchemaPrefixProjector, "dynamic_schema_prefix")
+    end
+
+    test "should support optional `schema_prefix/1` callback function" do
       defmodule SchemaPrefixCallbackProjector do
         use Commanded.Projections.Ecto,
           application: TestApplication,
@@ -73,24 +84,82 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
       assert_schema_prefix(SchemaPrefixCallbackProjector, "callback_schema_prefix")
     end
 
-    test "should support `schema_prefix` callback function with different schema per event" do
+    test "should support `schema_prefix/1` callback function with different schema per event" do
       defmodule SchemaPrefixPerEventCallbackProjector do
         use Commanded.Projections.Ecto,
           application: TestApplication,
           name: "schema_prefix_per_event_callback_projector"
 
         @impl Commanded.Projections.Ecto
-        def schema_prefix(%_{schema: schema}), do: schema
+        def schema_prefix(%SchemaEvent{schema: schema}), do: schema
       end
 
-      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %SchemaEvent{schema: "schema1"}) ==
+      assert schema_prefix(
+               SchemaPrefixPerEventCallbackProjector,
+               %SchemaEvent{schema: "schema1"},
+               %{}
+             ) ==
                "schema1"
 
-      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %SchemaEvent{schema: "schema2"}) ==
+      assert schema_prefix(
+               SchemaPrefixPerEventCallbackProjector,
+               %SchemaEvent{schema: "schema2"},
+               %{}
+             ) ==
                "schema2"
 
-      assert schema_prefix(SchemaPrefixPerEventCallbackProjector, %SchemaEvent{schema: "schema3"}) ==
+      assert schema_prefix(
+               SchemaPrefixPerEventCallbackProjector,
+               %SchemaEvent{schema: "schema3"},
+               %{}
+             ) ==
                "schema3"
+    end
+
+    test "should support optional `schema_prefix/2` callback function" do
+      defmodule SchemaPrefix2CallbackProjector do
+        use Commanded.Projections.Ecto,
+          application: TestApplication,
+          name: "schema_prefix_callback_projector"
+
+        @impl Commanded.Projections.Ecto
+        def schema_prefix(_event, _metadata), do: "callback_schema_prefix"
+      end
+
+      assert_schema_prefix(SchemaPrefix2CallbackProjector, "callback_schema_prefix")
+    end
+
+    test "should support `schema_prefix/2` callback function with different schema per event and metadata" do
+      defmodule SchemaPrefixPerEventAndMetadataCallbackProjector do
+        use Commanded.Projections.Ecto,
+          application: TestApplication,
+          name: "schema_prefix_per_event_callback_projector"
+
+        @impl Commanded.Projections.Ecto
+        def schema_prefix(%SchemaEvent{schema: schema}, %{"key" => value}),
+          do: schema <> "-" <> value
+      end
+
+      assert schema_prefix(
+               SchemaPrefixPerEventAndMetadataCallbackProjector,
+               %SchemaEvent{schema: "schema1"},
+               %{"key" => "value1"}
+             ) ==
+               "schema1-value1"
+
+      assert schema_prefix(
+               SchemaPrefixPerEventAndMetadataCallbackProjector,
+               %SchemaEvent{schema: "schema2"},
+               %{"key" => "value2"}
+             ) ==
+               "schema2-value2"
+
+      assert schema_prefix(
+               SchemaPrefixPerEventAndMetadataCallbackProjector,
+               %SchemaEvent{schema: "schema3"},
+               %{"key" => "value3"}
+             ) ==
+               "schema3-value3"
     end
 
     test "should update the ProjectionVersion with a schema prefix" do
@@ -118,7 +187,7 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
 
     test "should error when configured with an invalid schema prefix" do
       assert_raise ArgumentError,
-                   "expected :schema_prefix option to be a string or a one-arity function, but got: :invalid",
+                   "expected :schema_prefix option to be a string or a one-arity or two-arity function, but got: :invalid",
                    fn ->
                      Code.eval_string("""
                      defmodule InvalidSchemaPrefixProjector do
@@ -133,12 +202,12 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
   end
 
   defp assert_schema_prefix(projector, expected_prefix) do
-    prefix = schema_prefix(projector, %SchemaEvent{})
+    prefix = schema_prefix(projector, %SchemaEvent{}, %{})
 
     assert prefix == expected_prefix
   end
 
-  defp schema_prefix(projector, event) do
-    apply(projector, :schema_prefix, [event])
+  defp schema_prefix(projector, event, metadata) do
+    apply(projector, :schema_prefix, [event, metadata])
   end
 end
