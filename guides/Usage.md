@@ -165,7 +165,7 @@ Here's an example projector module where an error tagged tuple is explicitly ret
 defmodule MyApp.ExampleProjector do
   use Commanded.Projections.Ecto,
     application: MyApp.Application,
-    repo: MyApp.Projections.Repo,,
+    repo: MyApp.Projections.Repo,
     name: "MyApp.ExampleProjector"
 
   require Logger
