@@ -10,9 +10,9 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
       application: TestApplication,
       name: "Projector"
 
-    project(%AnEvent{name: name}, fn multi ->
+    project %AnEvent{name: name}, fn multi ->
       Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
-    end)
+    end
 
     def after_update(event, metadata, changes) do
       %{pid: pid} = event

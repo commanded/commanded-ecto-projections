@@ -169,7 +169,7 @@ defmodule Commanded.Projections.ProjectionVersionSchemaPrefixTest do
           name: "TestPrefixProjector",
           schema_prefix: "test"
 
-        project(%SchemaEvent{}, & &1)
+        project %SchemaEvent{}, & &1
       end
 
       alias TestPrefixProjector.ProjectionVersion

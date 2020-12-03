@@ -10,17 +10,17 @@ defmodule Commanded.Projections.EctoProjectionTest do
   defmodule Projector do
     use Commanded.Projections.Ecto, application: TestApplication, name: "Projector"
 
-    project(%AnEvent{name: name}, _metadata, fn multi ->
+    project %AnEvent{name: name}, _metadata, fn multi ->
       Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
-    end)
+    end
 
-    project(%AnotherEvent{name: name}, fn multi ->
+    project %AnotherEvent{name: name}, fn multi ->
       Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
-    end)
+    end
 
-    project(%ErrorEvent{}, fn multi ->
+    project %ErrorEvent{}, fn multi ->
       Ecto.Multi.error(multi, :my_projection, :failure)
-    end)
+    end
   end
 
   setup do
