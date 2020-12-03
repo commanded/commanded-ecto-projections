@@ -1,73 +1,65 @@
 defmodule Commanded.Projections.ErrorCallbackTest do
   use ExUnit.Case
 
+  import ExUnit.CaptureLog
   import Commanded.Projections.ProjectionAssertions
 
-  alias Commanded.Event.FailureContext
   alias Commanded.EventStore.RecordedEvent
-  alias Commanded.Projections.Events.{AnEvent, ErrorEvent, ExceptionEvent, InvalidMultiEvent}
+
+  alias Commanded.Projections.Events.{
+    AnEvent,
+    ErrorEvent,
+    ExceptionEvent,
+    InvalidMultiEvent,
+    RaiseEvent
+  }
+
   alias Commanded.Projections.Projection
   alias Commanded.Projections.Repo
-
-  defmodule ErrorProjector do
-    use Commanded.Projections.Ecto, application: TestApplication, name: "ErrorProjector"
-
-    project %AnEvent{name: name, pid: pid} = event, fn multi ->
-      send(pid, event)
-
-      Ecto.Multi.insert(multi, :projection, %Projection{name: name})
-    end
-
-    project %ErrorEvent{name: name}, fn multi ->
-      Ecto.Multi.insert(multi, :projection, %Projection{name: name})
-
-      {:error, :failed}
-    end
-
-    project %ExceptionEvent{}, fn multi ->
-      # Attempt an invalid insert due to `name` type mismatch (expects a string).
-      Ecto.Multi.insert(multi, :projection, %Projection{name: 1})
-    end
-
-    project %InvalidMultiEvent{name: name}, fn multi ->
-      # Attempt to execute an invalid Ecto query (comparison with `nil` is forbidden as it is unsafe).
-      query = from(p in Projection, where: p.name == ^name)
-
-      Ecto.Multi.update_all(multi, :projection, query, set: [name: name])
-    end
-
-    @impl Commanded.Event.Handler
-    def error({:error, :failed} = error, %ErrorEvent{pid: pid}, %FailureContext{}) do
-      send(pid, error)
-
-      :skip
-    end
-
-    @impl Commanded.Event.Handler
-    def error({:error, _error} = error, %ExceptionEvent{pid: pid}, %FailureContext{}) do
-      send(pid, error)
-
-      :skip
-    end
-
-    @impl Commanded.Event.Handler
-    def error({:error, _error} = error, %InvalidMultiEvent{pid: pid}, %FailureContext{}) do
-      send(pid, error)
-
-      :skip
-    end
-  end
 
   setup do
     start_supervised!(TestApplication)
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
-  test "should allow returning an error tagged tuple from `project` macro" do
-    event = %ErrorEvent{pid: self()}
-    metadata = %{handler_name: "ErrorProjector", event_number: 1}
+  describe "error handling" do
+    setup [:start_projector]
 
-    assert {:error, :failed} == ErrorProjector.handle(event, metadata)
+    test "should allow returning an error tagged tuple from `project` macro", %{
+      projector: projector
+    } do
+      event = %ErrorEvent{pid: self()}
+      metadata = %{handler_name: "ErrorProjector", event_number: 1}
+
+      events = [
+        %RecordedEvent{event_number: 1, event_id: UUID.uuid4(), data: event, metadata: metadata}
+      ]
+
+      send(projector, {:events, events})
+
+      assert_receive {:error, :failed}
+    end
+
+    test "should rescue exceptions in `project` macro", %{projector: projector} do
+      event = %RaiseEvent{pid: self(), message: "it crashed, it crashed, it crashed"}
+      metadata = %{event_number: 1}
+
+      events = [
+        %RecordedEvent{event_number: 1, event_id: UUID.uuid4(), data: event, metadata: metadata}
+      ]
+
+      log =
+        capture_log(fn ->
+          send(projector, {:events, events})
+
+          assert_receive {:error, %RuntimeError{message: "it crashed, it crashed, it crashed"}}
+        end)
+
+      assert log =~ "[error] ** (RuntimeError) it crashed, it crashed, it crashed"
+
+      assert log =~
+               "test/support/error_projector.ex:34: anonymous fn/2 in ErrorProjector.handle/2"
+    end
   end
 
   describe "`error/3` callback function" do

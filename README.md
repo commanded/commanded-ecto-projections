@@ -32,6 +32,25 @@ MIT License
 
 ---
 
+### Example projector
+
+```elixir
+defmodule MyApp.ExampleProjector do
+  use Commanded.Projections.Ecto,
+    application: MyApp.Application,
+    repo: MyApp.Projections.Repo,
+    name: "MyApp.ExampleProjector"
+
+  project %AnEvent{} = event, _metadata, fn multi ->
+    %AnEvent{name: name} = event
+
+    projection = %ExampleProjection{name: name}
+
+    Ecto.Multi.insert(multi, :example_projection, projection)
+  end
+end
+```
+
 ### Contributing
 
 Pull requests to contribute new or improved features, and extend documentation are most welcome. Please follow the existing coding conventions.
