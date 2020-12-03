@@ -91,8 +91,8 @@ defmodule Commanded.Projections.Ecto do
           end)
           |> Ecto.Multi.update(:projection_version, changeset, prefix: prefix)
 
-        with %Ecto.Multi{} = multi <- apply_projection_to_multi(multi, multi_fn),
-             {:ok, changes} <- attempt_transaction(multi) do
+        with %Ecto.Multi{} = multi <- apply(multi_fn, [multi]),
+             {:ok, changes} <- transaction(multi) do
           if function_exported?(__MODULE__, :after_update, 3) do
             apply(__MODULE__, :after_update, [event, metadata, changes])
           else
@@ -105,21 +105,8 @@ defmodule Commanded.Projections.Ecto do
         end
       end
 
-      defp apply_projection_to_multi(%Ecto.Multi{} = multi, multi_fn)
-           when is_function(multi_fn, 1) do
-        try do
-          apply(multi_fn, [multi])
-        rescue
-          e -> {:error, e}
-        end
-      end
-
-      defp attempt_transaction(multi) do
-        try do
-          @repo.transaction(multi, timeout: @timeout, pool_timeout: @timeout)
-        rescue
-          e -> {:error, e}
-        end
+      defp transaction(%Ecto.Multi{} = multi) do
+        @repo.transaction(multi, timeout: @timeout, pool_timeout: @timeout)
       end
 
       defoverridable schema_prefix: 1, schema_prefix: 2

@@ -19,6 +19,10 @@ defmodule Commanded.Projections.Events do
     defstruct [:pid, name: "ExceptionEvent"]
   end
 
+  defmodule RaiseEvent do
+    defstruct [:pid, :message]
+  end
+
   defmodule InvalidMultiEvent do
     defstruct [:pid, :name]
   end
