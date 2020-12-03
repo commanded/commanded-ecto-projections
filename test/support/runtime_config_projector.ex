@@ -4,11 +4,11 @@ defmodule Commanded.Projections.RuntimeConfigProjector do
   alias Commanded.Projections.Events.AnEvent
   alias Commanded.Projections.Projection
 
-  project %AnEvent{} = event, fn multi ->
+  project(%AnEvent{} = event, fn multi ->
     %AnEvent{name: name, pid: pid} = event
 
     send(pid, {:project, name})
 
     Ecto.Multi.insert(multi, :my_projection, %Projection{name: name})
-  end
+  end)
 end

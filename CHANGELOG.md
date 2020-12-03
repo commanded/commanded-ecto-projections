@@ -1,5 +1,9 @@
 # Changelog
 
+## Next release
+
+- Allow exceptions to be rescued by Commanded's event handler ([#37](https://github.com/commanded/commanded-ecto-projections/pull/37)).
+
 ## v1.2.0
 
 - Support runtime projector names ([#32](https://github.com/commanded/commanded-ecto-projections/pull/32)).
