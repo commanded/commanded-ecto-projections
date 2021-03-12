@@ -28,17 +28,29 @@ defmodule Commanded.Projections.AfterUpdateCallbackTest do
     Ecto.Adapters.SQL.Sandbox.checkout(Repo)
   end
 
-  test "should call `after_update/3` function with event, metadata, and changes" do
-    event = %AnEvent{pid: self()}
-    metadata = %{handler_name: "Projector", event_number: 1}
+  describe "`after_update/3` callback function" do
+    test "should be called after projecting with event, metadata, and changes" do
+      event = %AnEvent{pid: self()}
+      metadata = %{handler_name: "Projector", event_number: 1}
 
-    assert :ok == Projector.handle(event, metadata)
+      assert :ok == Projector.handle(event, metadata)
 
-    assert_receive {:after_update, ^event, ^metadata, changes}
+      assert_receive {:after_update, ^event, ^metadata, changes}
 
-    case Map.get(changes, :my_projection) do
-      %Projection{name: "AnEvent"} -> :ok
-      _ -> flunk("invalid changes")
+      assert match?(%{my_projection: %Projection{name: "AnEvent"}}, changes)
+    end
+
+    test "should not be called when projecting an already seen event" do
+      event = %AnEvent{pid: self()}
+      metadata = %{handler_name: "Projector", event_number: 1}
+
+      assert :ok == Projector.handle(event, metadata)
+
+      assert_receive {:after_update, ^event, ^metadata, _changes}
+
+      assert :ok == Projector.handle(event, metadata)
+
+      refute_receive {:after_update, _event, _metadata, _changes}
     end
   end
 end

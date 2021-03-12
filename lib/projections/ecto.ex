@@ -12,11 +12,11 @@ defmodule Commanded.Projections.Ecto do
           schema_prefix: "my-prefix",
           timeout: :infinity
 
-        project %Event{}, _metadata, fn multi ->
+        project %Event{}, fn multi ->
           Ecto.Multi.insert(multi, :my_projection, %MyProjection{...})
         end
 
-        project %AnotherEvent{}, fn multi ->
+        project %AnotherEvent{}, metadata, fn multi ->
           Ecto.Multi.insert(multi, :my_projection, %MyProjection{...})
         end
       end
@@ -59,37 +59,30 @@ defmodule Commanded.Projections.Ecto do
         projection_name = Map.fetch!(metadata, :handler_name)
         event_number = Map.fetch!(metadata, :event_number)
 
-        changeset =
-          %ProjectionVersion{projection_name: projection_name}
-          |> ProjectionVersion.changeset(%{last_seen_event_number: event_number})
+        projection_version = %ProjectionVersion{
+          projection_name: projection_name,
+          last_seen_event_number: event_number
+        }
 
         prefix = schema_prefix(event, metadata)
 
+        now = DateTime.utc_now()
+
+        update_query =
+          from(pv in ProjectionVersion,
+            where:
+              pv.projection_name == ^projection_name and
+                pv.last_seen_event_number < ^event_number,
+            update: [set: [last_seen_event_number: ^event_number, updated_at: ^now]]
+          )
+
         multi =
           Ecto.Multi.new()
-          |> Ecto.Multi.run(:verify_projection_version, fn repo, _changes ->
-            version =
-              case repo.get(ProjectionVersion, projection_name, prefix: prefix) do
-                nil ->
-                  repo.insert!(
-                    %ProjectionVersion{
-                      projection_name: projection_name,
-                      last_seen_event_number: 0
-                    },
-                    prefix: prefix
-                  )
-
-                version ->
-                  version
-              end
-
-            if version.last_seen_event_number < event_number do
-              {:ok, %{version: version}}
-            else
-              {:error, :already_seen_event}
-            end
-          end)
-          |> Ecto.Multi.update(:projection_version, changeset, prefix: prefix)
+          |> Ecto.Multi.insert(:projection_version, projection_version,
+            on_conflict: update_query,
+            conflict_target: [:projection_name],
+            prefix: prefix
+          )
 
         with %Ecto.Multi{} = multi <- apply(multi_fn, [multi]),
              {:ok, changes} <- transaction(multi) do
@@ -99,7 +92,7 @@ defmodule Commanded.Projections.Ecto do
             :ok
           end
         else
-          {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
+          {:error, :already_seen_event} -> :ok
           {:error, _stage, error, _changes} -> {:error, error}
           {:error, _error} = reply -> reply
         end
@@ -107,6 +100,9 @@ defmodule Commanded.Projections.Ecto do
 
       defp transaction(%Ecto.Multi{} = multi) do
         @repo.transaction(multi, timeout: @timeout, pool_timeout: @timeout)
+      rescue
+        Ecto.StaleEntryError ->
+          {:error, :already_seen_event}
       end
 
       defoverridable schema_prefix: 1, schema_prefix: 2
@@ -207,9 +203,10 @@ defmodule Commanded.Projections.Ecto do
 
         import Ecto.Changeset
 
-        @primary_key {:projection_name, :string, []}
+        @primary_key false
 
         schema "projection_versions" do
+          field(:projection_name, :string, primary_key: true)
           field(:last_seen_event_number, :integer)
 
           timestamps(type: :naive_datetime_usec)
