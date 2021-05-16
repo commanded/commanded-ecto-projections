@@ -1,17 +1,22 @@
 # Changelog
 
-## v1.2.1
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## v1.2.1 - 2020-12-03
 
 - Allow exceptions to be rescued by Commanded's event handler ([#37](https://github.com/commanded/commanded-ecto-projections/pull/37)).
 
-## v1.2.0
+## v1.2.0 - 2020-08-18
 
 - Support runtime projector names ([#32](https://github.com/commanded/commanded-ecto-projections/pull/32)).
 - Support `schema_prefix/2` function ([#33](https://github.com/commanded/commanded-ecto-projections/pull/33)).
 
 ---
 
-## v1.1.0
+## v1.1.0 - 2020-05-25
 
 ### Enhancements
 
@@ -20,7 +25,7 @@
 
 ---
 
-## v1.0.0
+## v1.0.0 - 2019-11-21
 
 ### Enhancements
 
@@ -30,7 +35,7 @@
 
 ---
 
-## v0.8.0
+## v0.8.0 - 2019-01-23
 
 ### Enhancements
 
@@ -57,13 +62,13 @@
 
 ---
 
-## v0.7.1
+## v0.7.1 - 2018-07-24
 
 ### Bug fixes
 
 - Ensure errors encountered while building the `Ecto.Multi` data structure within a `project` function are caught and passed to the `error/3` callback.
 
-## v0.7.0
+## v0.7.0 - 2018-07-22
 
 ### Enhancements
 
@@ -71,7 +76,7 @@
 
 ---
 
-## v0.6.0
+## v0.6.0 - 2017-09-29
 
 ### Enhancements
 
@@ -80,7 +85,7 @@
 
 ---
 
-## v0.5.0
+## v0.5.0 - 2017-09-15
 
 ### Enhancements
 
@@ -88,7 +93,7 @@
 
 ---
 
-## v0.4.0
+## v0.4.0 - 2017-08-03
 
 ### Enhancements
 

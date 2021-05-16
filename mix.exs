@@ -1,6 +1,7 @@
 defmodule Commanded.Projections.Ecto.Mixfile do
   use Mix.Project
 
+  @source_url "https://github.com/commanded/commanded-ecto-projections"
   @version "1.2.1"
 
   def project do
@@ -10,13 +11,12 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       elixir: "~> 1.6",
       elixirc_paths: elixirc_paths(Mix.env()),
       aliases: aliases(),
-      description: description(),
       package: package(),
       build_embedded: Mix.env() == :prod,
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      dialyzer: dialyzer(),
-      docs: docs()
+      docs: docs(),
+      dialyzer: dialyzer()
     ]
   end
 
@@ -41,7 +41,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
       # Test & build tooling
       {:dialyxir, "~> 1.0.0", only: [:dev, :test], runtime: false},
-      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:mix_test_watch, "~> 1.0", only: :dev, runtime: false}
     ]
   end
@@ -51,12 +51,6 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       setup: ["ecto.create", "ecto.migrate"],
       reset: ["ecto.drop", "setup"]
     ]
-  end
-
-  defp description do
-    """
-    Read model projections for Commanded using Ecto.
-    """
   end
 
   defp dialyzer do
@@ -69,21 +63,22 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
   defp docs do
     [
-      main: "Commanded.Projections.Ecto",
-      canonical: "http://hexdocs.pm/commanded_ecto_projections",
-      source_ref: "v#{@version}",
       extra_section: "GUIDES",
       extras: [
         "CHANGELOG.md",
-        "guides/Getting Started.md",
-        "guides/Usage.md"
+        {:"LICENSE.md", [title: "License"]},
+        {:"README.md", [title: "Overview"]},
+        "guides/getting_started.md",
+        "guides/usage.md"
       ],
       groups_for_extras: [
-        Introduction: [
-          "guides/Getting Started.md",
-          "guides/Usage.md"
-        ]
-      ]
+        Introduction: Path.wildcard("guides/*.md")
+      ],
+      main: "readme",
+      canonical: "http://hexdocs.pm/commanded_ecto_projections",
+      source_url: @source_url,
+      source_ref: "v#{@version}",
+      formatters: ["html"]
     ]
   end
 
@@ -95,8 +90,10 @@ defmodule Commanded.Projections.Ecto.Mixfile do
         ".formatter.exs",
         "README*",
         "LICENSE*",
+        "CHANGELOG*",
         "priv/repo/migrations"
       ],
+      description: "Read model projections for Commanded using Ecto.",
       maintainers: ["Ben Smith"],
       licenses: ["MIT"],
       links: %{
