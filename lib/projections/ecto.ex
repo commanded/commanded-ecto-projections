@@ -125,7 +125,7 @@ defmodule Commanded.Projections.Ecto do
   `Ecto.Multi` struct that were executed within the database transaction.
 
   You could use this function to notify subscribers that the read model has been
-  updated, such as by publishling changes via Phoenix PubSub channels.
+  updated, such as by publishing changes via Phoenix PubSub channels.
 
   ## Example
 

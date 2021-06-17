@@ -1,36 +1,31 @@
-# Commanded Ecto projections
-
-Read model projections for [Commanded](https://github.com/commanded/commanded) CQRS/ES applications using [Ecto](https://github.com/elixir-ecto/ecto) for persistence.
-
----
-
-[Changelog](CHANGELOG.md)
-
-MIT License
+# Commanded Ecto Projections
 
 [![Build Status](https://travis-ci.com/commanded/commanded-ecto-projections.svg?branch=master)](https://travis-ci.com/commanded/commanded-ecto-projections)
-
----
+[![Module Version](https://img.shields.io/hexpm/v/commanded_ecto_projections.svg)](https://hex.pm/packages/commanded_ecto_projections)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg)](https://hexdocs.pm/commanded_ecto_projections/)
+[![Total Download](https://img.shields.io/hexpm/dt/commanded_ecto_projections.svg)](https://hex.pm/packages/commanded_ecto_projections)
+[![License](https://img.shields.io/hexpm/l/commanded_ecto_projections.svg)](https://github.com/commanded/commanded-ecto-projections/blob/master/LICENSE)
+[![Last Updated](https://img.shields.io/github/last-commit/commanded/commanded-ecto-projections.svg)](https://github.com/commanded/commanded-ecto-projections/commits/master)
 
 > This README and the following guides follow the `master` branch which may not be the currently published version.
->
-> [Read the documentation for the latest published version of Commanded Ecto projections on Hex](https://hexdocs.pm/commanded_ecto_projections/).
+
+Model projections for [Commanded](https://github.com/commanded/commanded) CQRS/ES applications using [Ecto](https://github.com/elixir-ecto/ecto) for persistence.
+
+Read the [Changelog](CHANGELOG.md) for recent changes and the [Hex Docs](https://hexdocs.pm/commanded_ecto_projections/) on API usage.
 
 ### Overview
 
-- [Getting started](guides/Getting%20Started.md)
-- [Usage](guides/Usage.md)
-  - [Creating a read model](guides/Usage.md#creating-a-read-model)
-  - [Creating a projector](guides/Usage.md#creating-a-projector)
-  - [Supervision](guides/Usage.md#supervision)
-  - [Error handling](guides/Usage.md#error-handling)
-    - [`error/3` callback](guides/Usage.md#error3-callback)
-    - [Error handling example](guides/Usage.md#error-handling-example)
-  - [`after_update/3` callback](guides/Usage.md#after_update3-callback)
-  - [Schema prefix](guides/Usage.md#schema-prefix)
-  - [Rebuilding a projection](guides/Usage.md#rebuilding-a-projection)
-
----
+- [Getting started](guides/getting_started.md)
+- [Usage](guides/usage.md)
+  - [Creating a read model](guides/usage.md#creating-a-read-model)
+  - [Creating a projector](guides/usage.md#creating-a-projector)
+  - [Supervision](guides/usage.md#supervision)
+  - [Error handling](guides/usage.md#error-handling)
+    - [`error/3` callback](guides/usage.md#error3-callback)
+    - [Error handling example](guides/usage.md#error-handling-example)
+  - [`after_update/3` callback](guides/usage.md#after_update3-callback)
+  - [Schema prefix](guides/usage.md#schema-prefix)
+  - [Rebuilding a projection](guides/usage.md#rebuilding-a-projection)
 
 ### Example projector
 
@@ -77,3 +72,10 @@ mix test
 Please [open an issue](https://github.com/commanded/commanded-ecto-projections/issues) if you encounter a problem, or need assistance. You can also seek help in the [Gitter chat room](https://gitter.im/commanded/Lobby) for Commanded.
 
 For commercial support, and consultancy, please contact [Ben Smith](mailto:ben@10consulting.com).
+
+## Copyright and License
+
+Copyright (c) 2017 Ben Smith
+
+This library is released under the MIT License. See the [LICENSE.md](./LICENSE.md) file
+for further details.
