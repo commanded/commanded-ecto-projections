@@ -66,15 +66,16 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       extra_section: "GUIDES",
       extras: [
         "CHANGELOG.md",
-        {:"LICENSE.md", [title: "License"]},
-        {:"README.md", [title: "Overview"]},
-        "guides/getting_started.md",
-        "guides/usage.md"
+        "guides/Getting Started.md",
+        "guides/Usage.md"
       ],
       groups_for_extras: [
-        Introduction: Path.wildcard("guides/*.md")
+        Introduction: [
+          "guides/Getting Started.md",
+          "guides/Usage.md"
+        ]
       ],
-      main: "readme",
+      main: "Commanded.Projections.Ecto",
       canonical: "http://hexdocs.pm/commanded_ecto_projections",
       source_url: @source_url,
       source_ref: "v#{@version}",
