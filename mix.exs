@@ -32,8 +32,8 @@ defmodule Commanded.Projections.Ecto.Mixfile do
   defp deps do
     [
       {:commanded, "~> 1.2"},
-      {:ecto, "~> 3.5"},
-      {:ecto_sql, "~> 3.5"},
+      {:ecto, "~> 3.8"},
+      {:ecto_sql, "~> 3.8"},
       {:postgrex, ">= 0.0.0", only: :test},
 
       # Optional dependencies
@@ -43,7 +43,8 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:mix_test_watch, "~> 1.1", only: :dev, runtime: false},
-      {:mox, "~> 1.0", only: :test}
+      {:mox, "~> 1.0", only: :test},
+      {:elixir_uuid, "~> 1.2"}
     ]
   end
 
