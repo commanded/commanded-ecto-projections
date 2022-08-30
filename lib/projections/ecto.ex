@@ -141,7 +141,7 @@ defmodule Commanded.Projections.Ecto do
             case version.last_seen_event_number do
               last_seen when last_seen < first_event_number -> {:ok, %{version: version}}
               last_seen when last_seen >= last_event_number -> {:error, :already_seen_batch}
-              last_seen -> {:error, :already_seen_partial_batch}
+              last_seen -> {:error, {:already_seen_partial_batch, last_seen}}
             end
           end)
           |> Ecto.Multi.update(:projection_version, changeset, prefix: prefix)
@@ -154,7 +154,11 @@ defmodule Commanded.Projections.Ecto do
             :ok
           end
         else
-          {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
+          {:error, :verify_projection_version, :already_seen_batch, _changes} -> :ok
+          {:error, :verify_projection_version, {:already_seen_partial_batch, last_seen}, _changes} ->
+            {event, _metadata} = Enum.find(events, fn {event, metadata} -> metadata.event_number == last_seen end)
+
+            {:error, :already_seen_partial_batch, event}
           {:error, _stage, error, _changes} -> {:error, error}
           {:error, _error} = reply -> reply
         end
@@ -397,8 +401,8 @@ defmodule Commanded.Projections.Ecto do
 
   defmacro project_batch(events, lambda) do
     quote do
-      def handle_batch(unquote(events), unquote(lambda)) do
-        update_projection_batch(events, lambda)
+      def handle_batch(unquote(events) = events) do
+        update_projection_batch(events, unquote(lambda))
       end
     end
   end
