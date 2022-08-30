@@ -91,6 +91,38 @@ defmodule Commanded.Projections.EctoProjectionBatchTest do
     assert_projections(Projection, [])
   end
 
+  defmodule BatchProjectorAfterUpdateCallback do
+    use Commanded.Projections.Ecto,
+      application: TestApplication,
+      callback_handler: :batch
+
+    project_batch events, fn multi ->
+      projections = Enum.map(events, fn
+        {%{name: name}, _metadata} -> %{name: name}
+      end)
+
+      Ecto.Multi.insert_all(multi, :projection, Projection, projections)
+    end
+
+    def after_update_batch(events, changes) do
+      {%{pid: pid}, _metadata} = List.first(events)
+
+      send(pid, {:after_update_batch, length(events), changes})
+
+      :ok
+    end
+  end
+
+  test "should call after_update_batch/2 callback" do
+    assert :ok == BatchProjectorAfterUpdateCallback.handle_batch([
+      {%AnEvent{pid: self()}, %{handler_name: "BatchProjector", event_number: 1}},
+      {%AnEvent{pid: self()}, %{handler_name: "BatchProjector", event_number: 2}},
+      {%AnEvent{pid: self()}, %{handler_name: "BatchProjector", event_number: 3}}
+    ])
+
+    assert_receive {:after_update_batch, 3, _changes}
+  end
+
   test "should not compile if both project/2 and project_batch/1 are defined" do
     assert_raise CompileError, fn ->
       ast = quote do
