@@ -38,7 +38,7 @@ defmodule Commanded.Projections.Ecto do
       @behaviour Commanded.Projections.Ecto
 
       @opts unquote(opts)
-      @repo @opts[:repo] || Application.get_env(:commanded_ecto_projections, :repo) ||
+      @repo @opts[:repo] || Application.compile_env(:commanded_ecto_projections, :repo) ||
               raise("Commanded Ecto projections expects :repo to be configured in environment")
       @timeout @opts[:timeout] || :infinity
 

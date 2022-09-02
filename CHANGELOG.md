@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0
+
+- Fix Elixir 1.14 compilation warnings
+
 ## 1.2.1
 
 - Allow exceptions to be rescued by Commanded's event handler ([#37](https://github.com/commanded/commanded-ecto-projections/pull/37)).
