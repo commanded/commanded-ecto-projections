@@ -1,9 +1,4 @@
-use Mix.Config
-
-# Print only warnings and errors during test
-config :logger, :console, level: :warn, format: "[$level] $message\n"
-
-config :ex_unit, capture_log: true
+import Config
 
 config :commanded_ecto_projections,
   ecto_repos: [Commanded.Projections.Repo],
@@ -15,3 +10,8 @@ config :commanded_ecto_projections, Commanded.Projections.Repo,
   password: "postgres",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox
+
+config :ex_unit, capture_log: true
+
+# Print only warnings and errors during test
+config :logger, :console, level: :warn, format: "[$level] $message\n"

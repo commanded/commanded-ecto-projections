@@ -14,6 +14,8 @@ end
 
 Ecto.Migrator.up(Repo, 20_170_609_120_000, CreateProjections)
 
+Mox.defmock(Commanded.EventStore.Adapters.Mock, for: Commanded.EventStore.Adapter)
+
 ExUnit.start()
 
 Ecto.Adapters.SQL.Sandbox.mode(Repo, :manual)

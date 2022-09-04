@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        otp: ['22.3']
-        elixir: ['1.11.2']
+        elixir: ['1.14.0']
+        otp: ['24.3', '25.0']
 
     services:
       postgres:

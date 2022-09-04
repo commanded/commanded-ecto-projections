@@ -8,6 +8,7 @@ defmodule Commanded.Projections.RuntimeConfigProjectorTest do
   alias Commanded.Projections.Projection
   alias Commanded.Projections.Repo
   alias Commanded.Projections.RuntimeConfigProjector
+  alias Commanded.UUID
 
   setup do
     start_supervised!(TestApplication)

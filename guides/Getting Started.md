@@ -7,7 +7,7 @@ You should already have [Ecto](https://github.com/elixir-ecto/ecto) installed an
     ```elixir
     def deps do
       [
-        {:commanded_ecto_projections, "~> 1.2"}
+        {:commanded_ecto_projections, "~> 1.3"}
       ]
     end
     ```

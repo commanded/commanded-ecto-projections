@@ -2,7 +2,7 @@
 
 ## 1.3.0
 
-- Fix Elixir 1.14 compilation warnings
+- Fix Elixir 1.14 compilation warnings ([#45](https://github.com/commanded/commanded-ecto-projections/pull/45)).
 
 ## 1.2.1
 
