@@ -2,13 +2,13 @@ defmodule Commanded.Projections.Ecto.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/commanded/commanded-ecto-projections"
-  @version "1.2.1"
+  @version "1.3.0"
 
   def project do
     [
       app: :commanded_ecto_projections,
       version: @version,
-      elixir: "~> 1.6",
+      elixir: "~> 1.10",
       elixirc_paths: elixirc_paths(Mix.env()),
       aliases: aliases(),
       package: package(),
