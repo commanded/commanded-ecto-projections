@@ -44,8 +44,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:mix_test_watch, "~> 1.1", only: :dev, runtime: false},
-      {:mox, "~> 1.0", only: :test},
-      {:elixir_uuid, "~> 1.2"}
+      {:mox, "~> 1.0", only: :test}
     ]
   end
 
