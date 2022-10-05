@@ -158,10 +158,7 @@ defmodule Commanded.Projections.Ecto do
           {:error, :verify_projection_version, {:already_seen_partial_batch, last_seen}, _changes} ->
             {event, _metadata} = Enum.find(events, fn {event, metadata} -> metadata.event_number == last_seen end)
 
-            # {:error, :already_seen_partial_batch, event}
-            # TODO: Figure out why this was getting stuck in a retry and crash loop
-            # This will drop events as-is
-            :ok
+            {:error, :already_seen_partial_batch, event}
           {:error, _stage, error, _changes} -> {:error, error}
           {:error, _error} = reply -> reply
         end
