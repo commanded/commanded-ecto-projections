@@ -27,6 +27,7 @@ defmodule Commanded.Projections.Ecto do
   - [Usage](usage.html)
 
   """
+  alias ErrorProjector.ProjectionVersion
 
   defmacro __using__(opts) do
     opts = opts || []
@@ -67,29 +68,39 @@ defmodule Commanded.Projections.Ecto do
 
         multi =
           Ecto.Multi.new()
-          |> Ecto.Multi.run(:verify_projection_version, fn repo, _changes ->
-            version =
-              case repo.get(ProjectionVersion, projection_name, prefix: prefix) do
-                nil ->
-                  repo.insert!(
-                    %ProjectionVersion{
-                      projection_name: projection_name,
-                      last_seen_event_number: 0
-                    },
-                    prefix: prefix
-                  )
-
-                version ->
-                  version
+          |> Ecto.Multi.insert_all(
+            :insert_version,
+            ProjectionVersion,
+            [
+              %{
+                inserted_at: DateTime.to_naive(DateTime.utc_now()),
+                updated_at: DateTime.to_naive(DateTime.utc_now()),
+                projection_name: projection_name,
+                last_seen_event_number: 0
+              }
+            ],
+            on_conflict: :nothing,
+            prefix: prefix
+          )
+          |> Ecto.Multi.update_all(
+            :update_version,
+            from(version in ProjectionVersion,
+              select: version,
+              where: version.projection_name == ^projection_name,
+              where: version.last_seen_event_number < ^event_number
+            ),
+            [set: [last_seen_event_number: event_number]],
+            prefix: prefix
+          )
+          |> Ecto.Multi.run(
+            :verify_projection_version,
+            fn _repo, %{update_version: {_, versions}} ->
+              case versions do
+                [] -> {:error, :already_seen_event}
+                [version] -> {:ok, %{version: version}}
               end
-
-            if version.last_seen_event_number < event_number do
-              {:ok, %{version: version}}
-            else
-              {:error, :already_seen_event}
             end
-          end)
-          |> Ecto.Multi.update(:projection_version, changeset, prefix: prefix)
+          )
 
         with %Ecto.Multi{} = multi <- apply(multi_fn, [multi]),
              {:ok, changes} <- transaction(multi) do
