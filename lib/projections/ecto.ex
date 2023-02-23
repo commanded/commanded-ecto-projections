@@ -27,8 +27,6 @@ defmodule Commanded.Projections.Ecto do
   - [Usage](usage.html)
 
   """
-  alias ErrorProjector.ProjectionVersion
-
   defmacro __using__(opts) do
     opts = opts || []
 
