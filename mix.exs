@@ -31,9 +31,10 @@ defmodule Commanded.Projections.Ecto.Mixfile do
 
   defp deps do
     [
-      {:commanded, "~> 1.2"},
-      {:ecto, "~> 3.5"},
-      {:ecto_sql, "~> 3.5"},
+      # TODO: Update this to commanded version with batching support
+      {:commanded, github: "Metrist-Software/commanded", branch: "batching-support"},
+      {:ecto, "~> 3.8"},
+      {:ecto_sql, "~> 3.8"},
       {:postgrex, ">= 0.0.0", only: :test},
 
       # Optional dependencies
