@@ -34,22 +34,24 @@ defmodule Commanded.Projections.Ecto do
     schema_prefix =
       opts[:schema_prefix] || Application.get_env(:commanded_ecto_projections, :schema_prefix)
 
+    repo = opts[:repo]
+    timeout = opts[:timeout] || :infinity
+
+    # Pass through any other configuration to the event handler
+    handler_opts = Keyword.drop(opts, [:repo, :schema_prefix, :timeout])
+
     quote location: :keep do
       @behaviour Commanded.Projections.Ecto
 
-      @opts unquote(opts)
-      @repo @opts[:repo] || Application.compile_env(:commanded_ecto_projections, :repo) ||
+      @repo unquote(repo) || Application.compile_env(:commanded_ecto_projections, :repo) ||
               raise("Commanded Ecto projections expects :repo to be configured in environment")
-      @timeout @opts[:timeout] || :infinity
-
-      # Pass through any other configuration to the event handler
-      @handler_opts Keyword.drop(@opts, [:repo, :schema_prefix, :timeout])
+      @timeout unquote(timeout)
 
       unquote(__include_schema_prefix__(schema_prefix))
       unquote(__include_projection_version_schema__())
 
       use Ecto.Schema
-      use Commanded.Event.Handler, @handler_opts
+      use Commanded.Event.Handler, unquote(handler_opts)
 
       import Ecto.Changeset
       import Ecto.Query
