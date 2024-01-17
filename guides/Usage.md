@@ -181,7 +181,7 @@ defmodule MyApp.ExampleProjector do
   end
 
   def error({:error, %Ecto.ConstraintError{} = error}, _event, _failure_context) do
-    Logger.error(fn -> "Failed due to constraint error: " <> inspect(error) end)
+    Logger.error("Failed due to constraint error: " <> inspect(error))
 
     :skip
   end
@@ -234,7 +234,7 @@ When using a prefix for your Ecto schemas you might also want to change the pref
     defmodule MyApp.ExampleProjector do
       use Commanded.Projections.Ecto,
         application: MyApp.Application,
-        repo: MyApp.Projections.Repo,    
+        repo: MyApp.Projections.Repo,
         name: "example_projection",
         schema_prefix: "example_schema_prefix"
     end
@@ -246,7 +246,7 @@ When using a prefix for your Ecto schemas you might also want to change the pref
     defmodule MyApp.ExampleProjector do
       use Commanded.Projections.Ecto,
         application: MyApp.Application,
-        repo: MyApp.Projections.Repo,    
+        repo: MyApp.Projections.Repo,
         name: "example_projection",
         schema_prefix: fn event -> "example_schema_prefix" end
     end
@@ -260,7 +260,7 @@ When using a prefix for your Ecto schemas you might also want to change the pref
     defmodule MyApp.ExampleProjector do
       use Commanded.Projections.Ecto,
         application: MyApp.Application,
-        repo: MyApp.Projections.Repo,    
+        repo: MyApp.Projections.Repo,
         name: "example_projection",
         schema_prefix: fn event, metadata -> "example_schema_prefix" end
     end
@@ -341,7 +341,7 @@ When using a prefix for your Ecto schemas you might also want to change the pref
         drop(table(:projection_versions, prefix: "example_schema_prefix"))
 
         execute("DROP SCHEMA example_schema_prefix CASCADE")
-      end        
+      end
     end
     ```
 

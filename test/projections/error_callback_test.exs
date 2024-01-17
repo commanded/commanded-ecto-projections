@@ -60,7 +60,7 @@ defmodule Commanded.Projections.ErrorCallbackTest do
           assert_receive {:error, %RuntimeError{message: "it crashed, it crashed, it crashed"}}
         end)
 
-      assert log =~ "[error] ** (RuntimeError) it crashed, it crashed, it crashed"
+      assert log =~ "** (RuntimeError) it crashed, it crashed, it crashed"
 
       assert log =~
                "test/support/error_projector.ex:34: anonymous fn/2 in ErrorProjector.handle/2"
