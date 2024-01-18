@@ -2,7 +2,7 @@ defmodule Commanded.Projections.Ecto.Mixfile do
   use Mix.Project
 
   @source_url "https://github.com/commanded/commanded-ecto-projections"
-  @version "1.3.0"
+  @version "1.4.0"
 
   def project do
     [
