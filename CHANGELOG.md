@@ -1,14 +1,28 @@
 # Changelog
 
+## Next release
+
+### Enhancements
+
+- Use an UPSERT SQL query to insert or update the projection version ([#52](https://github.com/commanded/commanded-ecto-projections/pull/52)).
+
 ## 1.3.0
+
+### Enhancements
 
 - Fix Elixir 1.14 compilation warnings ([#45](https://github.com/commanded/commanded-ecto-projections/pull/45)).
 
+---
+
 ## 1.2.1
+
+### Enhancements
 
 - Allow exceptions to be rescued by Commanded's event handler ([#37](https://github.com/commanded/commanded-ecto-projections/pull/37)).
 
 ## 1.2.0
+
+### Enhancements
 
 - Support runtime projector names ([#32](https://github.com/commanded/commanded-ecto-projections/pull/32)).
 - Support `schema_prefix/2` function ([#33](https://github.com/commanded/commanded-ecto-projections/pull/33)).
