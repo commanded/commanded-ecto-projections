@@ -13,5 +13,5 @@ config :commanded_ecto_projections, Commanded.Projections.Repo,
 
 config :ex_unit, capture_log: true
 
-# Print only warnings and errors during test
+# Print only warning and above log messages during tests
 config :logger, :console, level: :warning, format: "[$level] $message\n"

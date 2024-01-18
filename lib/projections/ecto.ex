@@ -51,7 +51,6 @@ defmodule Commanded.Projections.Ecto do
       use Ecto.Schema
       use Commanded.Event.Handler, @handler_opts
 
-      import Ecto.Changeset
       import Ecto.Query
       import unquote(__MODULE__)
 
@@ -59,37 +58,40 @@ defmodule Commanded.Projections.Ecto do
         projection_name = Map.fetch!(metadata, :handler_name)
         event_number = Map.fetch!(metadata, :event_number)
 
-        changeset =
-          %ProjectionVersion{projection_name: projection_name}
-          |> ProjectionVersion.changeset(%{last_seen_event_number: event_number})
+        projection_version = %ProjectionVersion{
+          projection_name: projection_name,
+          last_seen_event_number: event_number
+        }
 
         prefix = schema_prefix(event, metadata)
 
+        # Query to update an existing projection version with the last seen event number with
+        # a check to ensure that the event has not already been projected.
+        update_projection_version =
+          from(pv in ProjectionVersion,
+            where:
+              pv.projection_name == ^projection_name and pv.last_seen_event_number < ^event_number,
+            update: [set: [last_seen_event_number: ^event_number]]
+          )
+
         multi =
           Ecto.Multi.new()
-          |> Ecto.Multi.run(:verify_projection_version, fn repo, _changes ->
-            version =
-              case repo.get(ProjectionVersion, projection_name, prefix: prefix) do
-                nil ->
-                  repo.insert!(
-                    %ProjectionVersion{
-                      projection_name: projection_name,
-                      last_seen_event_number: 0
-                    },
-                    prefix: prefix
-                  )
+          |> Ecto.Multi.run(:track_projection_version, fn repo, _changes ->
+            try do
+              repo.insert(projection_version,
+                prefix: prefix,
+                on_conflict: update_projection_version,
+                conflict_target: [:projection_name]
+              )
+            rescue
+              exception in Ecto.StaleEntryError ->
+                # Attempted to insert a projection version for an already seen event
+                {:error, :already_seen_event}
 
-                version ->
-                  version
-              end
-
-            if version.last_seen_event_number < event_number do
-              {:ok, %{version: version}}
-            else
-              {:error, :already_seen_event}
+              exception ->
+                reraise exception, __STACKTRACE__
             end
           end)
-          |> Ecto.Multi.update(:projection_version, changeset, prefix: prefix)
 
         with %Ecto.Multi{} = multi <- apply(multi_fn, [multi]),
              {:ok, changes} <- transaction(multi) do
@@ -99,7 +101,7 @@ defmodule Commanded.Projections.Ecto do
             :ok
           end
         else
-          {:error, :verify_projection_version, :already_seen_event, _changes} -> :ok
+          {:error, :track_projection_version, :already_seen_event, _changes} -> :ok
           {:error, _stage, error, _changes} -> {:error, error}
           {:error, _error} = reply -> reply
         end
@@ -202,10 +204,7 @@ defmodule Commanded.Projections.Ecto do
     quote do
       defmodule ProjectionVersion do
         @moduledoc false
-
         use Ecto.Schema
-
-        import Ecto.Changeset
 
         @primary_key {:projection_name, :string, []}
 
@@ -213,12 +212,6 @@ defmodule Commanded.Projections.Ecto do
           field(:last_seen_event_number, :integer)
 
           timestamps(type: :naive_datetime_usec)
-        end
-
-        @required_fields ~w(last_seen_event_number)a
-
-        def changeset(model, params \\ :invalid) do
-          cast(model, params, @required_fields)
         end
       end
     end

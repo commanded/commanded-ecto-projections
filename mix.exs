@@ -37,13 +37,13 @@ defmodule Commanded.Projections.Ecto.Mixfile do
       {:postgrex, ">= 0.0.0", only: :test},
 
       # Optional dependencies
-      {:jason, "~> 1.3", optional: true},
+      {:jason, "~> 1.4", optional: true},
 
       # Test & build tooling
-      {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ex_doc, ">= 0.0.0", only: :dev, runtime: false},
       {:mix_test_watch, "~> 1.1", only: :dev, runtime: false},
-      {:mox, "~> 1.0", only: :test}
+      {:mox, "~> 1.1", only: :test}
     ]
   end
 
