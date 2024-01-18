@@ -68,15 +68,33 @@ defmodule Commanded.Projections.EctoProjectionTest do
     assert_seen_event("Projector", 3)
   end
 
+  test "should prevent first event being projected more than once" do
+    tasks =
+      Enum.map(1..5, fn _index ->
+        Task.async(Projector, :handle, [
+          %AnEvent{name: "Event1"},
+          %{handler_name: "Projector", event_number: 1}
+        ])
+      end)
+
+    results = Task.await_many(tasks)
+
+    assert Enum.uniq(results) == [:ok]
+
+    assert_projections(Projection, ["Event1"])
+    assert_seen_event("Projector", 1)
+  end
+
   test "should prevent an event being projected more than once" do
     Projector.handle(%AnEvent{name: "Event1"}, %{handler_name: "Projector", event_number: 1})
     Projector.handle(%AnEvent{name: "Event2"}, %{handler_name: "Projector", event_number: 2})
 
     tasks =
       Enum.map(1..5, fn _index ->
-        Task.async(fn ->
-          Projector.handle(%AnEvent{name: "Event3"}, %{handler_name: "Projector", event_number: 3})
-        end)
+        Task.async(Projector, :handle, [
+          %AnEvent{name: "Event3"},
+          %{handler_name: "Projector", event_number: 3}
+        ])
       end)
 
     results = Task.await_many(tasks)
@@ -85,6 +103,27 @@ defmodule Commanded.Projections.EctoProjectionTest do
 
     assert_projections(Projection, ["Event1", "Event2", "Event3"])
     assert_seen_event("Projector", 3)
+  end
+
+  test "should prevent an event being projected more than once after an ignored event" do
+    Projector.handle(%AnEvent{name: "Event1"}, %{handler_name: "Projector", event_number: 1})
+    Projector.handle(%AnEvent{name: "Event2"}, %{handler_name: "Projector", event_number: 2})
+    Projector.handle(%IgnoredEvent{name: "Event2"}, %{handler_name: "Projector", event_number: 3})
+
+    tasks =
+      Enum.map(1..5, fn _index ->
+        Task.async(Projector, :handle, [
+          %AnEvent{name: "Event4"},
+          %{handler_name: "Projector", event_number: 4}
+        ])
+      end)
+
+    results = Task.await_many(tasks)
+
+    assert Enum.uniq(results) == [:ok]
+
+    assert_projections(Projection, ["Event1", "Event2", "Event4"])
+    assert_seen_event("Projector", 4)
   end
 
   test "should return an error on failure" do
