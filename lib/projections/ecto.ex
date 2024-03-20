@@ -150,7 +150,7 @@ defmodule Commanded.Projections.Ecto do
 
   """
   @callback after_update(event :: struct, metadata :: map, changes :: Ecto.Multi.changes()) ::
-              :ok | {:error, any}
+              :ok | {:ok, any} | {:error, any}
 
   @doc """
   The optional `schema_prefix/1` callback function defined in a projector is
