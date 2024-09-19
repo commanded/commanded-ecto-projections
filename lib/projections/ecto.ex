@@ -118,35 +118,39 @@ defmodule Commanded.Projections.Ecto do
 
         last_event_number = Map.fetch!(last_event_metadata, :event_number)
 
-        changeset =
-          %ProjectionVersion{projection_name: projection_name}
-          |> ProjectionVersion.changeset(%{last_seen_event_number: last_event_number})
+        projection_version = %ProjectionVersion{
+          projection_name: projection_name,
+          last_seen_event_number: last_event_number
+        }
+
+        # Query to update an existing projection version with the last seen event number with
+        # a check to ensure that the event has not already been projected.
+        update_projection_version =
+          from(pv in ProjectionVersion,
+            where:
+              pv.projection_name == ^projection_name and
+                pv.last_seen_event_number < ^last_event_number,
+            update: [set: [last_seen_event_number: ^last_event_number]]
+          )
 
         multi =
           Ecto.Multi.new()
-          |> Ecto.Multi.run(:verify_projection_version, fn repo, _changes ->
-            version =
-              case repo.get(ProjectionVersion, projection_name, prefix: prefix) do
-                nil ->
-                  repo.insert!(
-                    %ProjectionVersion{
-                      projection_name: projection_name,
-                      last_seen_event_number: 0
-                    },
-                    prefix: prefix
-                  )
+          |> Ecto.Multi.run(:track_projection_version, fn repo, _changes ->
+            try do
+              repo.insert(projection_version,
+                prefix: prefix,
+                on_conflict: update_projection_version,
+                conflict_target: [:projection_name]
+              )
+            rescue
+              exception in Ecto.StaleEntryError ->
+                # Attempted to insert a projection version for an already seen event
+                {:error, :already_seen_event}
 
-                version ->
-                  version
-              end
-
-            case version.last_seen_event_number do
-              last_seen when last_seen < first_event_number -> {:ok, %{version: version}}
-              last_seen when last_seen >= last_event_number -> {:error, :already_seen_batch}
-              last_seen -> {:error, {:already_seen_partial_batch, last_seen}}
+              exception ->
+                reraise exception, __STACKTRACE__
             end
           end)
-          |> Ecto.Multi.update(:projection_version, changeset, prefix: prefix)
 
         with %Ecto.Multi{} = multi <- apply(multi_fn, [multi]),
              {:ok, changes} <- transaction(multi) do
@@ -156,11 +160,7 @@ defmodule Commanded.Projections.Ecto do
             :ok
           end
         else
-          {:error, :verify_projection_version, :already_seen_batch, _changes} -> :ok
-          {:error, :verify_projection_version, {:already_seen_partial_batch, last_seen}, _changes} ->
-            {event, _metadata} = Enum.find(events, fn {event, metadata} -> metadata.event_number == last_seen end)
-
-            {:error, :already_seen_partial_batch, event}
+          {:error, :track_projection_version, :already_seen_event, _changes} -> :ok
           {:error, _stage, error, _changes} -> {:error, error}
           {:error, _error} = reply -> reply
         end
@@ -264,7 +264,6 @@ defmodule Commanded.Projections.Ecto do
   @callback schema_prefix(event :: struct(), metadata :: map()) :: String.t() | nil
 
   defp __include_schema_prefix__(schema_prefix, opts \\ []) do
-
     is_batch_projector = opts[:handler_callback] == :batch
 
     quote do
