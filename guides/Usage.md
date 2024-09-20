@@ -119,7 +119,7 @@ end
 
 ### Using the `project_batch` macro
 
-By configuring the base event handler to use batching and using the `project_batch/2` macro, you can project a batch of events in a single step within a transaction. `project_batch/2` receives a list of `{event, metadata}` tuples for all the events in the batch and a similar single-arity function as `project/3` to affect an `Ecto.Multi` structure.
+You can use `project_batch` to receive events in batches. To enable batching, you need to set the `batch_size` and use the `project_batch/2` macro. `project_batch/2` receives a list of `{event, metadata}` tuples for all the events in the batch and a similar single-arity function as `project/3` to affect an `Ecto.Multi` structure.
 
 Note that there is currently no built in way to target a single type of event to be projected, and as such a single `project_batch` macro is expected to gracefully handle (or ignore) any events that it may receive
 
@@ -130,7 +130,7 @@ defmodule MyApp.Projections.BatchProjector do
       application: MyApp.Application,
       repo: MyApp.Projections.Repo,
       name: "example_batch_projection",
-      callback_handler: :batch, # This tells the underlying EventHandler to batch events
+      batch_size: 10
 
     project_batch events, fn multi ->
       projections = events
