@@ -107,16 +107,14 @@ defmodule Commanded.Projections.Ecto do
         end
       end
 
-      def update_projection_batch(events, multi_fn) do
+      def update_projection_batch([{first_event, first_event_metadata} | _] = events, multi_fn) do
         {first_event, first_event_metadata} = List.first(events)
-
-        first_event_number = Map.fetch!(first_event_metadata, :event_number)
-        projection_name = Map.fetch!(first_event_metadata, :handler_name)
-        prefix = schema_prefix(first_event, first_event_metadata)
+        %{event_number: first_event_number, handler_name: projection_name} = first_event_metadata
 
         {_last_event, last_event_metadata} = List.last(events)
+        %{event_number: last_event_number} = last_event_metadata
 
-        last_event_number = Map.fetch!(last_event_metadata, :event_number)
+        prefix = schema_prefix(first_event, first_event_metadata)
 
         projection_version = %ProjectionVersion{
           projection_name: projection_name,
