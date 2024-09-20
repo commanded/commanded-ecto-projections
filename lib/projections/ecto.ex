@@ -108,7 +108,6 @@ defmodule Commanded.Projections.Ecto do
       end
 
       def update_projection_batch([{first_event, first_event_metadata} | _] = events, multi_fn) do
-        {first_event, first_event_metadata} = List.first(events)
         %{event_number: first_event_number, handler_name: projection_name} = first_event_metadata
 
         {_last_event, last_event_metadata} = List.last(events)
