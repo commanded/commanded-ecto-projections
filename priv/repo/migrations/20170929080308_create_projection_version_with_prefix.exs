@@ -8,7 +8,7 @@ defmodule Commanded.Projections.Repo.Migrations.CreateProjectionVersionWithPrefi
       add(:projection_name, :text, primary_key: true)
       add(:last_seen_event_number, :bigint)
 
-      timestamps(type: :naive_datetime_usec)
+      timestamps(type: :timestamptz)
     end
   end
 
