@@ -45,7 +45,7 @@ defmodule Commanded.Projections.Ecto do
       # Pass through any other configuration to the event handler
       @handler_opts Keyword.drop(@opts, [:repo, :schema_prefix, :timeout])
 
-      unquote(__include_schema_prefix__(schema_prefix))
+      unquote(__include_schema_prefix__(schema_prefix, opts))
       unquote(__include_projection_version_schema__())
 
       use Ecto.Schema
@@ -107,6 +107,62 @@ defmodule Commanded.Projections.Ecto do
         end
       end
 
+      def update_projection_batch([{first_event, first_event_metadata} | _] = events, multi_fn) do
+        %{event_number: first_event_number, handler_name: projection_name} = first_event_metadata
+
+        {_last_event, last_event_metadata} = List.last(events)
+        %{event_number: last_event_number} = last_event_metadata
+
+        prefix = schema_prefix(first_event, first_event_metadata)
+
+        projection_version = %ProjectionVersion{
+          projection_name: projection_name,
+          last_seen_event_number: last_event_number
+        }
+
+        # Query to update an existing projection version with the last seen event number with
+        # a check to ensure that the event has not already been projected.
+        update_projection_version =
+          from(pv in ProjectionVersion,
+            where:
+              pv.projection_name == ^projection_name and
+                pv.last_seen_event_number < ^last_event_number,
+            update: [set: [last_seen_event_number: ^last_event_number]]
+          )
+
+        multi =
+          Ecto.Multi.new()
+          |> Ecto.Multi.run(:track_projection_version, fn repo, _changes ->
+            try do
+              repo.insert(projection_version,
+                prefix: prefix,
+                on_conflict: update_projection_version,
+                conflict_target: [:projection_name]
+              )
+            rescue
+              exception in Ecto.StaleEntryError ->
+                # Attempted to insert a projection version for an already seen event
+                {:error, :already_seen_event}
+
+              exception ->
+                reraise exception, __STACKTRACE__
+            end
+          end)
+
+        with %Ecto.Multi{} = multi <- apply(multi_fn, [multi]),
+             {:ok, changes} <- transaction(multi) do
+          if function_exported?(__MODULE__, :after_update_batch, 2) do
+            apply(__MODULE__, :after_update_batch, [events, changes])
+          else
+            :ok
+          end
+        else
+          {:error, :track_projection_version, :already_seen_event, _changes} -> :ok
+          {:error, _stage, error, _changes} -> {:error, error}
+          {:error, _error} = reply -> reply
+        end
+      end
+
       defp transaction(%Ecto.Multi{} = multi) do
         @repo.transaction(multi, timeout: @timeout, pool_timeout: @timeout)
       end
@@ -117,7 +173,7 @@ defmodule Commanded.Projections.Ecto do
 
   ## User callbacks
 
-  @optional_callbacks [after_update: 3, schema_prefix: 1, schema_prefix: 2]
+  @optional_callbacks [after_update: 3, after_update_batch: 2, schema_prefix: 1, schema_prefix: 2]
 
   @doc """
   The optional `after_update/3` callback function defined in a projector is
@@ -153,6 +209,38 @@ defmodule Commanded.Projections.Ecto do
               :ok | {:ok, any} | {:error, any}
 
   @doc """
+  The optional `after_update_batch/2` callback function defined in a projector is
+  called after a batch of projected events.
+
+  The function receives the events, their metadata, and all changes from the
+  `Ecto.Multi` struct that were executed within the database transaction.
+
+  ## Example
+
+      defmodule MyApp.ExampleProjector do
+        use Commanded.Projections.Ecto,
+          application: MyApp.Application,
+          repo: MyApp.Projections.Repo,
+          name: "MyApp.ExampleProjector"
+          handler_callback: :batch
+
+        project_batch events, fn multi ->
+          {%AnEvent{name: name}, metadata} = List.first(events)
+          Ecto.Multi.insert(multi, :example_projection, %ExampleProjection{name: name})
+        end
+
+        @impl Commanded.Projections.Ecto
+        def after_update_batch(events, changes) do
+          # Use the events, metadata, or `Ecto.Multi` changes and return `:ok`
+          :ok
+        end
+      end
+
+  """
+  @callback after_update_batch(events :: list(tuple), changes :: Ecto.Multi.changes()) ::
+              :ok | {:error, any}
+
+  @doc """
   The optional `schema_prefix/1` callback function defined in a projector is
   used to set the schema of the `projection_versions` table used by the
   projector for idempotency checks.
@@ -172,7 +260,9 @@ defmodule Commanded.Projections.Ecto do
   """
   @callback schema_prefix(event :: struct(), metadata :: map()) :: String.t() | nil
 
-  defp __include_schema_prefix__(schema_prefix) do
+  defp __include_schema_prefix__(schema_prefix, opts \\ []) do
+    is_batch_projector = opts[:handler_callback] == :batch
+
     quote do
       cond do
         is_nil(unquote(schema_prefix)) ->
@@ -182,6 +272,12 @@ defmodule Commanded.Projections.Ecto do
         is_binary(unquote(schema_prefix)) ->
           def schema_prefix(_event), do: nil
           def schema_prefix(_event, _metadata), do: unquote(schema_prefix)
+
+        !is_binary(unquote(schema_prefix)) and unquote(is_batch_projector) ->
+          raise ArgumentError,
+            message:
+              "expected :schema_prefix option for batch projector to be a string, but got: " <>
+                inspect(unquote(schema_prefix))
 
         is_function(unquote(schema_prefix), 1) ->
           def schema_prefix(event), do: nil
@@ -288,6 +384,14 @@ defmodule Commanded.Projections.Ecto do
     quote do
       def handle(unquote(event) = event, unquote(metadata) = metadata) do
         update_projection(event, metadata, unquote(lambda))
+      end
+    end
+  end
+
+  defmacro project_batch(events, lambda) do
+    quote do
+      def handle_batch(unquote(events) = events) do
+        update_projection_batch(events, unquote(lambda))
       end
     end
   end

@@ -116,6 +116,35 @@ project %ItemUpdated{uuid: uuid} = event, _metadata, fn multi ->
 end
 ```
 
+
+### Using the `project_batch` macro
+
+You can use `project_batch` to receive events in batches. To enable batching, you need to set the `batch_size` and use the `project_batch/2` macro. `project_batch/2` receives a list of `{event, metadata}` tuples for all the events in the batch and a similar single-arity function as `project/3` to affect an `Ecto.Multi` structure.
+
+Note that there is currently no built in way to target a single type of event to be projected, and as such a single `project_batch` macro is expected to gracefully handle (or ignore) any events that it may receive
+
+#### Example
+```elixir
+defmodule MyApp.Projections.BatchProjector do
+  use Commanded.Projections.Ecto,
+      application: MyApp.Application,
+      repo: MyApp.Projections.Repo,
+      name: "example_batch_projection",
+      batch_size: 10
+
+    project_batch events, fn multi ->
+      projections = events
+      |> Enum.map(fn
+        {%AnEvent{name: name}, _metadata} -> %{name: name}
+        _ -> nil
+      end)
+      |> Enum.reject(&is_nil/1)
+
+      Ecto.Multi.insert_all(multi, :example_batch_projection, Projection, projections)
+    end
+end
+```
+
 ## Supervision
 
 Your projector module must be included in your application supervision tree:
@@ -216,6 +245,11 @@ end
 ```
 
 You could use this function to notify subscribers that the read model has been updated (e.g. pub/sub to Phoenix channels).
+
+### `after_update_batch/2` callback
+
+Similarly for batching projectors, you can define an `after_update_batch/2` callback function in a projector to be called after a batch of events has been projected. The functions receives a list of `{event, metadata}` tuples for each processed event and all changes from the `Ecto.Multi` struct
+
 
 ## Schema prefix
 
